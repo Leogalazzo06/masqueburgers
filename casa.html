@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Casa | Administración</title>
+    <link rel="shortcut icon" href="hogar.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-50 text-slate-800">
+    <div id="toast-container" class="fixed top-5 right-5 z-[100] space-y-3"></div>
+
+    <div id="modal-confirm" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-xl shadow-2xl overflow-hidden transform transition-all scale-95 opacity-0 duration-200" id="confirm-content">
+            <div class="p-6 text-center">
+                <div id="confirm-icon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"></div>
+                <h3 id="confirm-title" class="text-xl font-bold text-slate-800 mb-2"></h3>
+                <p id="confirm-text" class="text-slate-500 text-sm mb-6"></p>
+                <div class="flex gap-3">
+                    <button id="btn-confirm-cancel" class="flex-1 py-3 px-4 rounded-lg font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Cancelar</button>
+                    <button id="btn-confirm-ok" class="flex-1 py-3 px-4 rounded-lg font-bold text-white transition shadow-lg"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex h-screen overflow-hidden">
+        <aside class="w-64 bg-slate-900 text-white flex-shrink-0 hidden md:flex flex-col">
+            <div class="p-6 text-lg font-bold border-b border-slate-800 flex items-center gap-3">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center"><i class="fas fa-home text-sm text-white"></i></div>
+                <span>Mi Casa</span>
+            </div>
+            <nav class="flex-1 p-4 space-y-2">
+                <button onclick="showSection('dashboard')" class="nav-btn w-full flex items-center p-3 rounded-lg hover:bg-slate-800 transition active-link">
+                    <i class="fas fa-chart-pie w-6"></i> Dashboard
+                </button>
+                <button onclick="showSection('boletas')" class="nav-btn w-full flex items-center p-3 rounded-lg hover:bg-slate-800 transition">
+                    <i class="fas fa-receipt w-6"></i> Gastos y boletas
+                </button>
+                <button onclick="showSection('sueldo')" class="nav-btn w-full flex items-center p-3 rounded-lg hover:bg-slate-800 transition">
+                    <i class="fas fa-wallet w-6"></i> Presupuesto
+                </button>
+                <button onclick="showSection('historial')" class="nav-btn w-full flex items-center p-3 rounded-lg hover:bg-slate-800 transition">
+                    <i class="fas fa-archive w-6"></i> Historial
+                </button>
+            </nav>
+            <div class="p-4 border-t border-slate-800">
+                <a href="index.html" class="w-full flex items-center gap-3 p-3 rounded-lg text-blue-400 hover:bg-blue-400/10 transition font-bold text-sm">
+                    <i class="fas fa-arrow-left"></i> Volver al Local
+                </a>
+            </div>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto">
+            <header class="bg-white shadow-sm p-6 flex justify-between items-center">
+                <h1 id="section-title" class="text-2xl font-bold text-slate-700">Dashboard</h1>
+                <span id="current-date" class="text-slate-500 text-sm italic"></span>
+            </header>
+
+         <div class="p-8">
+        <section id="sec-dashboard" class="space-y-8">
+            <div class="flex justify-end">
+                <button onclick="confirmarFinalizarMesCasa()" class="bg-slate-800 text-white px-5 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-600 transition shadow-md">
+                    <i class="fas fa-calendar-check"></i> Cerrar semana
+                </button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" id="kpi-cards"></div>
+            <div class="bg-white p-6 rounded-lg shadow-sm border-t-4 border-blue-500">
+                <h4 class="font-bold text-slate-700 mb-4 flex items-center gap-2"><i class="fas fa-bell text-blue-500"></i> Aviso del sistema</h4>
+                <div id="status-message" class="text-slate-600 italic text-sm">Analizando gastos...</div>
+            </div>
+        </section>
+
+        <section id="sec-boletas" class="hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <h3 class="text-xl font-bold text-slate-800"></h3>
+                <button onclick="openModal('modal-boleta')" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold shadow-lg hover:bg-blue-700 transition">+ Nueva boleta</button>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-50 border-b font-bold text-slate-500 uppercase text-[11px]">
+                        <tr><th class="p-4">Categoría</th><th class="p-4">Detalle</th><th class="p-4">Vencimiento</th><th class="p-4">Monto</th><th class="p-4">Estado</th><th class="p-4 text-right">Acción</th></tr>
+                    </thead>
+                    <tbody id="table-boletas-casa" class="divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="sec-sueldo" class="hidden space-y-6">
+            <div class="bg-gradient-to-r from-slate-800 to-slate-900 p-8 rounded-2xl text-white shadow-xl border-l-8 border-blue-500">
+                <h3 class="text-xl font-bold mb-2 text-slate-300">Ingreso semanal</h3>
+                <p class="text-4xl font-black" id="display-sueldo">$0</p>
+                <button onclick="openModal('modal-sueldo')" class="mt-6 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold transition shadow-lg">Configurar ingreso</button>
+            </div>
+        </section>
+
+        <section id="sec-historial" class="hidden space-y-6">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <h3 class="text-xl font-bold text-slate-800"></h3>
+        
+        <div class="flex items-center gap-3 w-full md:w-auto">
+            <div class="relative flex-1 md:w-64">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                <input type="text" id="search-historial" placeholder="Buscar período o fecha..." 
+                    class="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:border-blue-500 outline-none transition shadow-sm">
+            </div>
+            
+            <button onclick="borrarHistorialCompletoCasa()" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg font-bold text-xs hover:bg-red-100 transition flex items-center gap-2 shrink-0">
+                <i class="fas fa-trash-alt"></i> Limpiar historial
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
+        <table class="w-full text-left text-sm">
+            <thead class="bg-slate-50 border-b font-bold text-slate-500 uppercase text-[11px]">
+                <tr>
+                    <th class="p-4">Período</th>
+                    <th class="p-4 text-red-600">Total gastos</th>
+                    <th class="p-4 text-green-600">Ingreso</th>
+                    <th class="p-4 text-right">Estado</th>
+                </tr>
+            </thead>
+            <tbody id="table-historial-casa" class="divide-y divide-slate-100"></tbody>
+        </table>
+    </div>
+</section>
+    </div>
+
+                <section id="sec-boletas" class="hidden space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-bold text-slate-800">Gastos y boletas</h3>
+                        <button onclick="openModal('modal-boleta')" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold shadow-lg hover:bg-blue-700 transition">+ Nueva Boleta</button>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 border-b font-bold text-slate-500 uppercase text-[11px]">
+                                <tr><th class="p-4">Categoría</th><th class="p-4">Detalle</th><th class="p-4">Vencimiento</th><th class="p-4">Monto</th><th class="p-4">Estado</th><th class="p-4 text-right">Acción</th></tr>
+                            </thead>
+                            <tbody id="table-boletas-casa" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="sec-sueldo" class="hidden space-y-6">
+                    <div class="bg-gradient-to-r from-slate-800 to-slate-900 p-8 rounded-2xl text-white shadow-xl border-l-8 border-blue-500">
+                        <h3 class="text-xl font-bold mb-2 text-slate-300">Ingreso</h3>
+                        <p class="text-4xl font-black" id="display-sueldo">$0</p>
+                        <button onclick="openModal('modal-sueldo')" class="mt-6 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold transition shadow-lg">Configurar ingreso</button>
+                    </div>
+                </section>
+
+                <section id="sec-historial" class="hidden space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-bold text-slate-800">Resúmenes de casa</h3>
+                        <button onclick="borrarHistorialCompletoCasa()" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg font-bold text-xs hover:bg-red-100 transition flex items-center gap-2">
+                            <i class="fas fa-trash-alt"></i> Limpiar historial
+                        </button>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 border-b font-bold text-slate-500 uppercase text-[11px]">
+                                <tr><th class="p-4">Período</th><th class="p-4 text-red-600">Total Gastos</th><th class="p-4 text-green-600">Ingreso</th><th class="p-4 text-right">Estado</th></tr>
+                            </thead>
+                            <tbody id="table-historial-casa" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <div id="modal-boleta" class="hidden modal-overlay fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white w-full max-w-md p-8 rounded-xl shadow-2xl">
+            <h2 class="text-xl font-bold mb-6 flex items-center gap-2"><i class="fas fa-receipt text-blue-600"></i> Registrar gasto</h2>
+            <form id="form-boleta-casa" class="space-y-4">
+                <select id="b-tipo" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500" required>
+                    <option value="">Categoría...</option>
+                    <option>Alquiler/Expensas</option><option>Luz/Agua/Gas</option><option>Internet/Streaming</option><option>Tarjeta de Crédito</option><option>Supermercado</option><option>Seguros</option><option>Otros</option>
+                </select>
+                <input id="b-detalle" type="text" placeholder="Ej: Pago luz" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500" required>
+                <input id="b-monto" type="number" step="0.01" placeholder="Monto $" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500" required>
+                <input id="b-vencimiento" type="date" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500" required>
+                <div class="flex gap-2 pt-4">
+                    <button type="button" onclick="closeModal('modal-boleta')" class="flex-1 bg-slate-100 p-3 rounded-lg font-bold">Cancelar</button>
+                    <button type="submit" class="flex-1 bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-sueldo" class="hidden modal-overlay fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white w-full max-w-md p-8 rounded-xl shadow-2xl">
+            <h2 class="text-xl font-bold mb-6 flex items-center gap-2"><i class="fas fa-wallet text-green-600"></i> Ingreso</h2>
+            <form id="form-sueldo" class="space-y-4">
+                <p class="text-sm text-slate-500 mb-2">Define tu presupuesto base para calcular el saldo disponible.</p>
+                <input id="input-sueldo-valor" type="number" step="0.01" placeholder="Monto $" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500" required>
+                <div class="flex gap-2 pt-4">
+                    <button type="button" onclick="closeModal('modal-sueldo')" class="flex-1 bg-slate-100 p-3 rounded-lg font-bold">Cancelar</button>
+                    <button type="submit" class="flex-1 bg-blue-600 text-white p-3 rounded-lg font-bold">Actualizar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        const firebaseConfig = { apiKey: "AIzaSyBx_NozaAUD7jxylWbUYCu7TzM3Ylf20DM", authDomain: "mas-que-burgers-admin.firebaseapp.com", projectId: "mas-que-burgers-admin", storageBucket: "mas-que-burgers-admin.firebasestorage.app", messagingSenderId: "305904131504", appId: "1:305904131504:web:0d9ea8e6bea1efff0bca75" };
+        const app = initializeApp(firebaseConfig);
+        window.db = getFirestore(app);
+        window.auth = getAuth(app);
+    </script>
+    <script src="casa_app.js" type="module"></script>
+</body>
+</html>

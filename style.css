@@ -1,0 +1,44 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+.active-link {
+    background-color: #2563eb; 
+    color: white;
+}
+
+.active-filter {
+    background-color: white;
+    color: #2563eb;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.toast-msg {
+    animation: toastSlideIn 0.3s ease-out forwards;
+}
+
+@keyframes toastSlideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+#modal-confirm.show {
+    display: flex;
+}
+
+.confirm-animate {
+    transform: scale(1) !important;
+    opacity: 1 !important;
+}
+
+.modal-overlay {
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
