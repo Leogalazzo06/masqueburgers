@@ -27,31 +27,40 @@
     </div>
 
     <div class="flex h-screen overflow-hidden">
-        <aside class="w-64 bg-slate-900 text-white flex-shrink-0 hidden md:flex flex-col">
-            <div class="p-6 text-lg font-bold border-b border-slate-800 flex items-center gap-3">
-                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center"><i class="fas fa-home text-sm text-white"></i></div>
-                <span>Mi Casa</span>
+    <aside class="w-64 bg-slate-900 text-white flex-shrink-0 hidden md:flex flex-col">
+        <div class="p-6 text-lg font-bold border-b border-slate-800 flex items-center gap-3">
+            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center"><i class="fas fa-home text-sm text-white"></i></div>
+            <span>Mi Casa</span>
+        </div>
+        <nav class="flex-1 p-4 space-y-2">
+            <button onclick="showSection('dashboard')" class="nav-btn w-full flex items-center p-3 rounded-lg hover:bg-slate-800 transition active-link">
+                <i class="fas fa-chart-pie w-6"></i> Dashboard
+            </button>
+            <button onclick="showSection('boletas')" class="nav-btn w-full flex items-center p-3 rounded-lg hover:bg-slate-800 transition">
+                <i class="fas fa-receipt w-6"></i> Gastos y boletas
+            </button>
+            <button onclick="showSection('sueldo')" class="nav-btn w-full flex items-center p-3 rounded-lg hover:bg-slate-800 transition">
+                <i class="fas fa-wallet w-6"></i> Presupuesto
+            </button>
+            <button onclick="showSection('historial')" class="nav-btn w-full flex items-center p-3 rounded-lg hover:bg-slate-800 transition">
+                <i class="fas fa-archive w-6"></i> Historial
+            </button>
+
+            <div class="pt-4 pb-2 px-3">
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Ayuda</p>
             </div>
-            <nav class="flex-1 p-4 space-y-2">
-                <button onclick="showSection('dashboard')" class="nav-btn w-full flex items-center p-3 rounded-lg hover:bg-slate-800 transition active-link">
-                    <i class="fas fa-chart-pie w-6"></i> Dashboard
-                </button>
-                <button onclick="showSection('boletas')" class="nav-btn w-full flex items-center p-3 rounded-lg hover:bg-slate-800 transition">
-                    <i class="fas fa-receipt w-6"></i> Gastos y boletas
-                </button>
-                <button onclick="showSection('sueldo')" class="nav-btn w-full flex items-center p-3 rounded-lg hover:bg-slate-800 transition">
-                    <i class="fas fa-wallet w-6"></i> Presupuesto
-                </button>
-                <button onclick="showSection('historial')" class="nav-btn w-full flex items-center p-3 rounded-lg hover:bg-slate-800 transition">
-                    <i class="fas fa-archive w-6"></i> Historial
-                </button>
-            </nav>
-            <div class="p-4 border-t border-slate-800">
-                <a href="index.html" class="w-full flex items-center gap-3 p-3 rounded-lg text-blue-400 hover:bg-blue-400/10 transition font-bold text-sm">
-                    <i class="fas fa-arrow-left"></i> Volver al Local
-                </a>
-            </div>
-        </aside>
+            <a href="guiadeuso-casa.html" class="nav-btn w-full flex items-center p-3 rounded-lg hover:bg-blue-600 transition text-slate-300 hover:text-white group">
+                <i class="fas fa-question-circle w-6 group-hover:scale-110 transition"></i> 
+                <span class="font-bold">Guía de uso</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-slate-800">
+            <a href="index.html" class="w-full flex items-center gap-3 p-3 rounded-lg text-blue-400 hover:bg-blue-400/10 transition font-bold text-sm">
+                <i class="fas fa-arrow-left"></i> Volver al Local
+            </a>
+        </div>
+    </aside>
 
         <main class="flex-1 overflow-y-auto">
             <header class="bg-white shadow-sm p-6 flex justify-between items-center">
