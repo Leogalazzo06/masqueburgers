@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ayuda - Mas que Burger's Casa</title>
+    <link rel="shortcut icon" href="https://imagedelivery.net/ut8GNCA1obOu4JnXrJ_J9Q/e7b59903-06e0-48f8-1bb1-71bd6da8a800/public">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Corrección de scroll y visualización */
+        body, html {
+            height: 100%;
+            overflow: hidden;
+        }
+        .image-container {
+            @apply relative cursor-pointer group mx-auto;
+            max-width: 100%;
+        }
+        .zoom-overlay {
+            @apply absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-2;
+        }
+        
+        /* Modal moderno mejorado */
+        #image-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        #image-modal.active {
+            opacity: 1;
+        }
+        
+        .modal-content {
+            position: relative;
+            max-width: 95vw;
+            max-height: 95vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #modal-img {
+            max-width: 100%;
+            max-height: 95vh;
+            object-fit: contain;
+            border-radius: 12px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        #modal-img.loaded {
+            transform: scale(1);
+            opacity: 1;
+        }
+        
+        /* Controles del modal */
+        .modal-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 12px;
+            z-index: 201;
+        }
+        
+        .modal-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 18px;
+        }
+        
+        .modal-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+        
+        .modal-btn:active {
+            transform: scale(0.95);
+        }
+        
+        /* Indicador de carga */
+        .loading-spinner {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Zoom controls */
+        .zoom-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            padding: 8px 12px;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .zoom-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            font-size: 16px;
+        }
+        
+        .zoom-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .zoom-level {
+            color: white;
+            font-size: 14px;
+            padding: 0 12px;
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+            min-width: 60px;
+            justify-content: center;
+        }
+        
+        /* Imagen con zoom */
+        .modal-image-wrapper {
+            overflow: auto;
+            max-width: 95vw;
+            max-height: 95vh;
+            border-radius: 12px;
+            cursor: move;
+        }
+        
+        .modal-image-wrapper::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        .modal-image-wrapper::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        
+        .modal-image-wrapper::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+        
+        .modal-image-wrapper::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div id="image-modal">
+        <div class="loading-spinner" id="loading-spinner"></div>
+        
+        <div class="modal-controls">
+            <button class="modal-btn" onclick="closeImage()" title="Cerrar (ESC)">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="modal-content">
+            <div class="modal-image-wrapper" id="image-wrapper">
+                <img id="modal-img" src="" alt="" draggable="false">
+            </div>
+        </div>
+        
+        <div class="zoom-controls">
+            <button class="zoom-btn" onclick="zoomOut()" title="Alejar">
+                <i class="fas fa-minus"></i>
+            </button>
+            <div class="zoom-level" id="zoom-level">100%</div>
+            <button class="zoom-btn" onclick="zoomIn()" title="Acercar">
+                <i class="fas fa-plus"></i>
+            </button>
+            <button class="zoom-btn" onclick="resetZoom()" title="Restablecer">
+                <i class="fas fa-undo"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="flex h-screen overflow-hidden">
+        <aside class="w-64 bg-slate-900 text-white flex-shrink-0 hidden md:flex flex-col">
+            <div class="p-6 text-lg font-bold border-b border-slate-800 flex items-center gap-3">
+                <img src="hogar.png" 
+                     alt="Logo" class="w-8 h-8 object-contain">
+                <span>Mi casa</span>
+            </div>
+            <nav class="flex-1 p-4 space-y-2">
+                <a href="casa.html" class="w-full flex items-center p-3 rounded-lg hover:bg-slate-800 transition">
+                    <i class="fas fa-arrow-left w-6"></i> Volver al Panel
+                </a>
+                <div class="pt-4 pb-2 px-3">
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Manual de Usuario</p>
+                </div>
+                <button class="w-full flex items-center p-3 rounded-lg bg-blue-600 text-white font-bold transition">
+                    <i class="fas fa-question-circle w-6"></i> Cómo usar
+                </button>
+            </nav>
+            <div class="p-4 border-t border-slate-800">
+                <div class="text-[10px] text-slate-600 italic px-3">Diseñado por Hostara.</div>
+            </div>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto bg-slate-50">
+            <header class="bg-white shadow-sm p-6 flex justify-between items-center sticky top-0 z-10">
+                <h1 class="text-2xl font-bold text-slate-700">Guía de uso del sistema</h1>
+                <div class="flex items-center gap-3">
+                    <span class="text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-1 rounded uppercase tracking-wider hidden sm:inline-block">
+                        <i class="fas fa-search-plus mr-1"></i> Haz clic en las imágenes para ampliar
+                    </span>
+                    <img src="hogar.png" 
+                         alt="Logo" class="h-10 w-10 object-contain">
+                </div>
+            </header>
+
+            <div class="p-8 max-w-5xl mx-auto space-y-12">
+                
+               <section>
+    <div class="flex items-center gap-3 mb-4">
+        <div class="bg-slate-800 text-white p-2 rounded-lg"><i class="fas fa-th-large"></i></div>
+        <h2 class="text-xl font-bold text-slate-800">1. Dashboard (Pantalla Principal)</h2>
+    </div>
+    <p class="text-slate-600 mb-4">Es la pantalla de inicio donde se tiene una visión general rápida del estado financiero semanal.</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+        <div class="space-y-3">
+            <ul class="space-y-3 text-sm">
+                <li class="flex gap-3">
+                    <i class="fas fa-check text-blue-500 mt-0.5 flex-shrink-0"></i> 
+                    <span><strong>Deudas vencidas:</strong> Detalle de pagos que ya pasaron su fecha.</span>
+                </li>
+                <li class="flex gap-3">
+                    <i class="fas fa-check text-blue-500 mt-0.5 flex-shrink-0"></i> 
+                    <span><strong>Por vencer:</strong> Avisos con 7 días de anticipación para próximos pagos.</span>
+                </li>
+                <li class="flex gap-3">
+                    <i class="fas fa-check text-blue-500 mt-0.5 flex-shrink-0"></i> 
+                    <span><strong>Pagado en la semana:</strong> Total acumulado de gastos ya abonados.</span>
+                </li>
+                <li class="flex gap-3">
+                    <i class="fas fa-check text-blue-500 mt-0.5 flex-shrink-0"></i> 
+                    <span><strong>Saldo disponible:</strong> El dinero restante después de cubrir todos los pagos.</span>
+                </li>
+            </ul>
+        </div>
+        <div class="image-container shadow-md rounded-xl overflow-hidden border border-slate-200" onclick="openImage('dashboard-casa.png')">
+            <img src="dashboard-casa.png" alt="Dashboard Mi Casa" class="w-full h-auto block">
+            <div class="zoom-overlay"><i class="fas fa-search-plus"></i> CLIC PARA AMPLIAR</div>
+        </div>
+    </div>
+</section>
+
+                <hr class="border-slate-200">
+
+                <section>
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="bg-slate-800 text-white p-2 rounded-lg"><i class="fas fa-file-invoice-dollar"></i></div>
+                        <h2 class="text-xl font-bold text-slate-800">2. Gastos y Boletas</h2>
+                    </div>
+                    <p class="text-slate-600 mb-4">En esta sección se generan las boletas por pagar o ya pagadas para mantener registro de cada una con su total y fecha de vencimiento. </p>
+                    
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                        <h3 class="font-bold text-blue-600">Al cargar una boleta deberás registrar:</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                            <ul class="space-y-3 text-sm">
+                                <li><strong>Categoría:</strong> A que corresponde.</li>
+                                <li><strong>Descripción:</strong> Algún detalle importante.</li>
+                                <li><strong>Monto:</strong> Valor del pago.</li>
+                                <li><strong>Fecha de vencimiento:</strong> Indicar la fecha de vencimiento o, en caso de estar pagado, la fecha de pago.</li>
+                            </ul>
+                            <div class="image-container shadow-md rounded-xl overflow-hidden border border-slate-200" onclick="openImage('gastosboletas-casa.png')">
+                                <img src="gastosboletas-casa.png" alt="Gastos Mi Casa" class="w-full h-auto block">
+                                <div class="zoom-overlay"><i class="fas fa-search-plus"></i> CLIC PARA AMPLIAR</div>
+                            </div>
+                        </div>
+                        <p class="text-sm bg-blue-50 p-4 rounded-lg text-blue-800 italic">
+                            <i class="fas fa-info-circle mr-2"></i> Mantener estas boletas actualizadas permite que el sistema descuente los montos del presupuesto semanal.
+                        </p>
+                    </div>
+                </section>
+
+                <hr class="border-slate-200">
+
+               <section>
+    <div class="flex items-center gap-3 mb-4">
+        <div class="bg-slate-800 text-white p-2 rounded-lg"><i class="fas fa-wallet"></i></div>
+        <h2 class="text-xl font-bold text-slate-800">3. Presupuesto</h2>
+    </div>
+    <p class="text-slate-600 mb-4">En esta categoría se asigna un presupuesto inicial, del cual se irá descontando el dinero a medida que se registren gastos. Todo ítem marcado como “Pagado” se descuenta automáticamente de ese presupuesto.</p>
+    
+    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div class="space-y-4">
+                <div class="bg-amber-50 border-l-4 border-amber-400 p-4 text-amber-900 text-sm">
+                    <strong>Configuración de ingresos:</strong><br>
+                    Utiliza el botón "Configurar ingreso" para establecer el monto semanal con el que iniciarás el periodo.
+                </div>
+                <h4 class="font-bold text-slate-700">Reglas principales:</h4>
+                <ul class="grid grid-cols-1 gap-2 text-xs">
+                    <li class="bg-blue-50 p-3 border-l-4 border-blue-400 rounded"><b>Descuento automático:</b> Todo lo que se marque como "Pagado" se descuenta del presupuesto.</li>
+                    <li class="bg-blue-50 p-3 border-l-4 border-blue-400 rounded"><b>Gestión de boletas:</b> Si no haces clic en "Pagar", el gasto no se descuenta ni se archiva.</li>
+                </ul>
+            </div>
+            <div class="space-y-4">
+                <div class="image-container shadow-md rounded-xl overflow-hidden border border-slate-200" onclick="openImage('presupuesto.png')">
+                    <img src="presupuesto.png" alt="Presupuesto" class="w-full h-auto block">
+                    <div class="zoom-overlay"><i class="fas fa-search-plus"></i> CLIC PARA AMPLIAR</div>
+                </div>
+              
+            </div>
+        </div>
+    </div>
+</section>
+                <hr class="border-slate-200">
+
+            <section>
+    <div class="flex items-center gap-3 mb-4">
+        <div class="bg-slate-800 text-white p-2 rounded-lg"><i class="fas fa-history"></i></div>
+        <h2 class="text-xl font-bold text-slate-800">4. Historial</h2>
+    </div>
+    <p class="text-slate-600 mb-6">Al finalizar cada semana, los datos de ese periodo se guardan y pasan automáticamente a esta sección. Es vital marcar los pagos para que el historial sea preciso al cerrar la semana.</p>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+       <div class="image-container shadow-md rounded-xl overflow-hidden border border-slate-200" onclick="openImage('registros.png')">
+            <img src="registros.png" alt="Historial Semanal" class="w-full h-auto block">
+            <div class="zoom-overlay"><i class="fas fa-search-plus"></i> CLIC PARA AMPLIAR</div>
+        </div>
+        
+
+            
+            <ul class="text-xs space-y-2 bg-red-50 p-4 rounded-lg text-red-900 border-l-4 border-red-400">
+                <li><i class="fas fa-exclamation-triangle mr-2"></i> Las boletas cargadas que no se marquen como pagadas no aparecerán en el historial.</li>
+                <li><i class="fas fa-redo mr-2"></i> Esas boletas quedarán como gastos no pagos y se sumarán a la semana siguiente hasta abonarse.</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+            </div>
+
+           
+        </main>
+    </div>
+
+    <script>
+        let currentZoom = 1;
+        let isDragging = false;
+        let startX, startY, scrollLeft, scrollTop;
+
+        function openImage(src) {
+            const modal = document.getElementById('image-modal');
+            const modalImg = document.getElementById('modal-img');
+            const spinner = document.getElementById('loading-spinner');
+            const imageWrapper = document.getElementById('image-wrapper');
+            
+            // Resetear zoom
+            currentZoom = 1;
+            updateZoomLevel();
+            
+            // Mostrar modal y spinner
+            modal.style.display = 'flex';
+            spinner.style.display = 'block';
+            modalImg.classList.remove('loaded');
+            
+            // Cargar imagen
+            const img = new Image();
+            img.onload = function() {
+                modalImg.src = src;
+                spinner.style.display = 'none';
+                setTimeout(() => {
+                    modal.classList.add('active');
+                    modalImg.classList.add('loaded');
+                }, 10);
+            };
+            img.src = src;
+            
+            // Prevenir scroll del body
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeImage() {
+            const modal = document.getElementById('image-modal');
+            const modalImg = document.getElementById('modal-img');
+            
+            modal.classList.remove('active');
+            modalImg.classList.remove('loaded');
+            
+            setTimeout(() => {
+                modal.style.display = 'none';
+                modalImg.src = '';
+                currentZoom = 1;
+                updateZoomLevel();
+                document.body.style.overflow = '';
+            }, 300);
+        }
+
+        function zoomIn() {
+            if (currentZoom < 3) {
+                currentZoom += 0.25;
+                applyZoom();
+            }
+        }
+
+        function zoomOut() {
+            if (currentZoom > 0.5) {
+                currentZoom -= 0.25;
+                applyZoom();
+            }
+        }
+
+        function resetZoom() {
+            currentZoom = 1;
+            applyZoom();
+            const wrapper = document.getElementById('image-wrapper');
+            wrapper.scrollLeft = 0;
+            wrapper.scrollTop = 0;
+        }
+
+        function applyZoom() {
+            const modalImg = document.getElementById('modal-img');
+            modalImg.style.transform = `scale(${currentZoom})`;
+            updateZoomLevel();
+        }
+
+        function updateZoomLevel() {
+            const zoomLevel = document.getElementById('zoom-level');
+            zoomLevel.textContent = Math.round(currentZoom * 100) + '%';
+        }
+
+        // Cerrar con clic fuera de la imagen
+        document.getElementById('image-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeImage();
+            }
+        });
+
+        // Cerrar con ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeImage();
+        });
+
+        // Zoom con scroll del mouse
+        document.getElementById('image-wrapper').addEventListener('wheel', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                if (e.deltaY < 0) {
+                    zoomIn();
+                } else {
+                    zoomOut();
+                }
+            }
+        }, { passive: false });
+
+        // Drag para mover la imagen cuando está ampliada
+        const wrapper = document.getElementById('image-wrapper');
+        
+        wrapper.addEventListener('mousedown', (e) => {
+            if (currentZoom > 1) {
+                isDragging = true;
+                wrapper.style.cursor = 'grabbing';
+                startX = e.pageX - wrapper.offsetLeft;
+                startY = e.pageY - wrapper.offsetTop;
+                scrollLeft = wrapper.scrollLeft;
+                scrollTop = wrapper.scrollTop;
+            }
+        });
+
+        wrapper.addEventListener('mouseleave', () => {
+            isDragging = false;
+            wrapper.style.cursor = 'move';
+        });
+
+        wrapper.addEventListener('mouseup', () => {
+            isDragging = false;
+            wrapper.style.cursor = 'move';
+        });
+
+        wrapper.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const x = e.pageX - wrapper.offsetLeft;
+            const y = e.pageY - wrapper.offsetTop;
+            const walkX = (x - startX) * 2;
+            const walkY = (y - startY) * 2;
+            wrapper.scrollLeft = scrollLeft - walkX;
+            wrapper.scrollTop = scrollTop - walkY;
+        });
+    </script>
+</body>
+</html>
