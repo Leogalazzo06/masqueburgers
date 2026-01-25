@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -9,10 +8,74 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <style>
+        .spinner {
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #2563eb;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body class="bg-slate-900 flex items-center justify-center h-screen p-4">
 
     <div id="toast-container" class="fixed top-5 right-5 z-[100] space-y-3"></div>
+
+    <!-- Modal de cambio de contraseña -->
+    <div id="modal-cambiar-pass" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] items-center justify-center hidden">
+        <div class="bg-white w-full max-w-md p-8 rounded-2xl shadow-2xl relative border border-slate-100 mx-4">
+            <div class="absolute top-0 left-0 w-full h-2 bg-amber-500"></div>
+            
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-shield-halved text-3xl text-amber-600"></i>
+                </div>
+                <h2 class="text-xl font-black text-slate-800 uppercase">Acción necesaria</h2>
+                <p class="text-sm text-slate-500 mt-2">Debes cambiar la contraseña temporal.</p>
+            </div>
+
+            <form id="form-cambiar-pass" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-black text-slate-400 uppercase ml-1 mb-1 tracking-widest">Nueva contraseña</label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-4 top-4 text-slate-300"></i>
+                        <input type="password" id="nueva-pass" placeholder="Mínimo 6 caracteres" 
+                            class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition" required minlength="6">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-black text-slate-400 uppercase ml-1 mb-1 tracking-widest">Confirmar contraseña</label>
+                    <div class="relative">
+                        <i class="fas fa-lock-open absolute left-4 top-4 text-slate-300"></i>
+                        <input type="password" id="confirmar-pass" placeholder="Repite la contraseña" 
+                            class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition" required minlength="6">
+                    </div>
+                </div>
+
+                <!-- Loader para cambio de contraseña -->
+                <div id="loader-cambiar-pass" class="hidden bg-blue-50 border-l-4 border-blue-400 p-3 text-sm text-blue-900 flex items-center gap-3">
+                    <div class="spinner"></div>
+                    <span class="font-bold">Cambiando contraseña...</span>
+                </div>
+
+                <div class="bg-blue-50 border-l-4 border-blue-400 p-3 text-xs text-blue-900">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    <strong>Importante:</strong> Guarda tu nueva contraseña en un lugar seguro. No la compartas con nadie.
+                </div>
+
+                <button type="submit" id="btn-cambiar-pass" class="w-full bg-amber-600 text-white py-4 rounded-xl font-black uppercase tracking-widest hover:bg-amber-700 shadow-lg shadow-amber-500/30 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-amber-600">
+                    Cambiar Contraseña
+                </button>
+            </form>
+        </div>
+    </div>
 
     <div class="bg-white w-full max-w-md p-8 rounded-2xl shadow-2xl overflow-hidden relative border border-slate-100">
         <div class="absolute top-0 left-0 w-full h-2 bg-blue-600"></div>
@@ -47,7 +110,13 @@
                 </div>
             </div>
 
-            <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-all active:scale-[0.98]">
+            <!-- Loader de inicio de sesión -->
+            <div id="loader-login" class="hidden bg-blue-50 border-l-4 border-blue-400 p-3 text-sm text-blue-900 flex items-center gap-3 rounded-lg">
+                <div class="spinner"></div>
+                <span class="font-bold">Verificando credenciales...</span>
+            </div>
+
+            <button type="submit" id="btn-login" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600">
                 Entrar al Sistema
             </button>
         </form>
@@ -78,4 +147,3 @@
     <script src="login.js" type="module"></script>
 </body>
 </html>
-
