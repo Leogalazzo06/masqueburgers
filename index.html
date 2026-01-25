@@ -1,33 +1,338 @@
-<section>
-    <div class="flex items-center gap-3 mb-4">
-        <div class="bg-slate-800 text-white p-2 rounded-lg"><i class="fas fa-th-large"></i></div>
-        <h2 class="text-xl font-bold text-slate-800">1. Dashboard (Pantalla Principal)</h2>
-    </div>
-    <p class="text-slate-600 mb-4">Es la pantalla de inicio donde tendrás una visión general rápida del estado financiero semanal.</p>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-        <div class="space-y-3">
-            <ul class="space-y-3 text-sm">
-                <li class="flex gap-3">
-                    <i class="fas fa-check text-blue-500 mt-0.5 flex-shrink-0"></i> 
-                    <span><strong>Deudas vencidas:</strong> Detalle de pagos que ya pasaron su fecha.</span>
-                </li>
-                <li class="flex gap-3">
-                    <i class="fas fa-check text-blue-500 mt-0.5 flex-shrink-0"></i> 
-                    <span><strong>Por vencer:</strong> Avisos con 7 días de anticipación.</span>
-                </li>
-                <li class="flex gap-3">
-                    <i class="fas fa-check text-blue-500 mt-0.5 flex-shrink-0"></i> 
-                    <span><strong>Pagado en la semana:</strong> Total de gastos ya abonados.</span>
-                </li>
-                <li class="flex gap-3">
-                    <i class="fas fa-check text-blue-500 mt-0.5 flex-shrink-0"></i> 
-                    <span><strong>Pendiente:</strong> Total acumulado de deudas por pagar.</span>
-                </li>
-            </ul>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mas que Burger's Admin</title>
+    <link rel="shortcut icon" href="https://imagedelivery.net/ut8GNCA1obOu4JnXrJ_J9Q/e7b59903-06e0-48f8-1bb1-71bd6da8a800/public">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div id="toast-container" class="fixed top-5 right-5 z-[100] space-y-3"></div>
+
+    <div id="modal-confirm" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-xl shadow-2xl overflow-hidden transform transition-all scale-95 opacity-0 duration-200" id="confirm-content">
+            <div class="p-6 text-center">
+                <div id="confirm-icon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"></div>
+                <h3 id="confirm-title" class="text-xl font-bold text-slate-800 mb-2"></h3>
+                <p id="confirm-text" class="text-slate-500 text-sm mb-6"></p>
+                <div class="flex gap-3">
+                    <button id="btn-confirm-cancel" class="flex-1 py-3 px-4 rounded-lg font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Cancelar</button>
+                    <button id="btn-confirm-ok" class="flex-1 py-3 px-4 rounded-lg font-bold text-white transition shadow-lg"></button>
+                </div>
+            </div>
         </div>
-        <div class="image-container shadow-md rounded-xl overflow-hidden border border-slate-200" onclick="openImage('dashboard.png')">
-            <img src="dashboard.png" alt="Dashboard" class="w-full h-auto block">
-            <div class="zoom-overlay"><i class="fas fa-search-plus"></i> CLIC PARA AMPLIAR</div>
+    </div>
+
+  <div class="flex h-screen overflow-hidden">
+    <aside class="w-64 bg-slate-900 text-white flex-shrink-0 hidden md:flex flex-col">
+        <div class="p-6 text-lg font-bold border-b border-slate-800 flex items-center gap-3">
+            <img src="https://imagedelivery.net/ut8GNCA1obOu4JnXrJ_J9Q/e7b59903-06e0-48f8-1bb1-71bd6da8a800/public" 
+                 alt="Logo" class="w-8 h-8 object-contain">
+            <span>Mas que Burger's</span>
+        </div>
+        <nav class="flex-1 p-4 space-y-2">
+            <button onclick="showSection('dashboard')" class="nav-btn w-full flex items-center p-3 rounded-lg hover:bg-slate-800 transition active-link">
+                <i class="fas fa-th-large w-6"></i> Dashboard
+            </button>
+            <button onclick="showSection('boletas')" class="nav-btn w-full flex items-center p-3 rounded-lg hover:bg-slate-800 transition">
+                <i class="fas fa-file-invoice-dollar w-6"></i> Gastos y Boletas
+            </button>
+            <button onclick="showSection('ventas')" class="nav-btn w-full flex items-center p-3 rounded-lg hover:bg-slate-800 transition">
+                <i class="fas fa-cash-register w-6"></i> Ventas
+            </button>
+            <button onclick="showSection('empleados')" class="nav-btn w-full flex items-center p-3 rounded-lg hover:bg-slate-800 transition">
+                <i class="fas fa-user-friends w-6"></i> Personal
+            </button>
+            <button onclick="showSection('proveedores')" class="nav-btn w-full flex items-center p-3 rounded-lg hover:bg-slate-800 transition">
+                <i class="fas fa-truck-field w-6"></i> Proveedores
+            </button>
+            <button onclick="showSection('historial')" class="nav-btn w-full flex items-center p-3 rounded-lg hover:bg-slate-800 transition">
+                <i class="fas fa-history w-6"></i> Historial
+            </button>
+
+            <div class="pt-4 pb-2 px-3">
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Gestión Personal</p>
+            </div>
+            <a href="casa.html" class="nav-btn w-full flex items-center p-3 rounded-lg hover:bg-blue-600 transition text-slate-300 hover:text-white group">
+                <i class="fas fa-home w-6 group-hover:scale-110 transition"></i> 
+                <span class="font-bold">Mi casa</span>
+            </a>
+
+            <div class="pt-4 pb-2 px-3">
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Ayuda</p>
+            </div>
+            <a href="guiadeuso-admin.html" class="nav-btn w-full flex items-center p-3 rounded-lg hover:bg-blue-600 transition text-slate-300 hover:text-white group">
+                <i class="fas fa-question-circle w-6 group-hover:scale-110 transition"></i> 
+                <span class="font-bold">Guía de uso</span>
+            </a>
+        </nav>
+        
+        <div class="p-4 border-t border-slate-800 space-y-4">
+            <button onclick="logout()" class="w-full flex items-center gap-3 p-3 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-400/10 transition font-bold text-sm">
+                <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+            </button>
+            <div class="text-[10px] text-slate-600 italic px-3">Diseñado por Hostara.</div>
+        </div>
+    </aside>
+
+        <main class="flex-1 overflow-y-auto">
+            <header class="bg-white shadow-sm p-6 flex justify-between items-center">
+                <h1 id="section-title" class="text-2xl font-bold text-slate-700">Dashboard</h1>
+                <div class="flex items-center gap-4">
+                    <span id="current-date" class="text-slate-500 text-sm italic"></span>
+                    <div class="h-10 w-10 flex items-center justify-center">
+                        <img src="https://imagedelivery.net/ut8GNCA1obOu4JnXrJ_J9Q/e7b59903-06e0-48f8-1bb1-71bd6da8a800/public" 
+                             alt="Logo" class="w-full h-full object-contain drop-shadow-sm">
+                    </div>
+                </div>
+            </header>
+
+            <div class="p-8">
+                <section id="sec-dashboard" class="space-y-8">
+                    <div class="flex justify-end">
+                        <button onclick="confirmarFinalizarMes()" class="bg-slate-800 text-white px-5 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-600 transition shadow-md">
+                            <i class="fas fa-calendar-check"></i> Finalizar semana
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" id="kpi-cards"></div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-100">
+                            <h4 class="font-bold text-slate-700 mb-6 border-b pb-2">Gastos por categoría</h4>
+                            <div id="category-chart" class="space-y-4"></div>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-sm border-t-4 border-blue-400">
+                            <h4 class="font-bold text-slate-700 mb-4">Aviso del sistema</h4>
+                            <p id="status-message" class="text-slate-600 italic">Analizando...</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="sec-empleados" class="hidden space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-bold"></h3>
+                        <button onclick="openModal('modal-empleado')" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium shadow">
+                            + Nuevo empleado
+                        </button>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
+                        <table class="w-full text-left">
+                           <thead class="bg-slate-50 border-b text-xs uppercase text-slate-500 font-bold">
+    <tr>
+        <th class="p-4">Nombre</th>
+        <th class="p-4">Puesto / Vacaciones</th>
+        <th class="p-4">Sueldo Base</th>
+        <th class="p-4">Cargar Extra</th> <th class="p-4 text-right">Acciones</th>
+    </tr>
+</thead>
+                            <tbody id="table-empleados" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="sec-proveedores" class="hidden space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-bold"></h3>
+                        <button onclick="openModal('modal-proveedor')" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium shadow">
+                            + Nuevo proveedor
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="grid-proveedores"></div>
+                </section>
+
+                <section id="sec-boletas" class="hidden space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-bold"></h3>
+                        <button onclick="openModal('modal-boleta')" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium shadow">
+                            + Nueva boleta
+                        </button>
+                    </div>
+                    <div class="flex gap-2 p-1.5 bg-slate-200 w-fit rounded-lg border border-slate-300">
+                        <button onclick="setFilter('todos')" id="filter-todos" class="filter-btn px-4 py-1.5 rounded-md text-xs font-bold transition active-filter">TODOS</button>
+                        <button onclick="setFilter('pendiente')" id="filter-pendiente" class="filter-btn px-4 py-1.5 rounded-md text-xs font-bold transition text-slate-600">PENDIENTES</button>
+                        <button onclick="setFilter('vencido')" id="filter-vencido" class="filter-btn px-4 py-1.5 rounded-md text-xs font-bold transition text-slate-600">VENCIDOS</button>
+                        <button onclick="setFilter('pagado')" id="filter-pagado" class="filter-btn px-4 py-1.5 rounded-md text-xs font-bold transition text-slate-600">PAGADOS</button>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-sm overflow-hidden border">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 border-b font-bold text-slate-500 uppercase text-[11px]">
+                                <tr>
+                                    <th class="p-4">Tipo</th>
+                                    <th class="p-4">Proveedor / Detalle</th>
+                                    <th class="p-4">Vencimiento</th>
+                                    <th class="p-4">Monto</th>
+                                    <th class="p-4">Estado</th>
+                                    <th class="p-4 text-right">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-boletas" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </section>
+<section id="sec-ventas" class="hidden space-y-8">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-6 rounded-xl border shadow-sm">
+        <div>
+            <h3 class="text-xl font-bold text-slate-700">Cierre de caja</h3>
+            <p class="text-sm text-slate-500">Registra el total de ventas del día de hoy.</p>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+            <div class="relative flex-1">
+                <span class="absolute left-3 top-2.5 text-slate-400 font-bold">$</span>
+                <input type="number" id="venta-monto" step="0.01" placeholder="0.00" class="w-full pl-8 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+            </div>
+            <button id="btn-cerrar-caja" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold shadow-lg hover:bg-blue-700 transition flex items-center justify-center gap-2">
+                <i class="fas fa-save"></i> Cerrar caja
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2 space-y-4">
+            <h4 class="font-bold text-slate-600 flex items-center gap-2"><i class="fas fa-list-ul"></i> Registros del mes actual</h4>
+            <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-50 border-b font-bold text-slate-500 uppercase text-[11px]">
+                        <tr>
+                            <th class="p-4">Fecha</th>
+                            <th class="p-4">Monto vendido</th>
+                            <th class="p-4 text-right">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-ventas" class="divide-y divide-slate-100">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="space-y-4">
+            <h4 class="font-bold text-slate-600 flex items-center gap-2"><i class="fas fa-chart-line"></i> Acumulado</h4>
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-6 rounded-xl shadow-lg text-white">
+                <p class="text-slate-400 text-xs font-bold uppercase tracking-wider">Ventas en lo que va del mes</p>
+                <h3 id="ventas-total-mes" class="text-3xl font-black mt-2 text-white">$0</h3>
+                <div class="mt-4 pt-4 border-t border-slate-700 flex items-center gap-2 text-[10px] text-slate-500 italic">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Suma automática de cierres diarios</span>
+                </div>
+            </div>
         </div>
     </div>
 </section>
+                <section id="sec-historial" class="hidden space-y-4">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <h3 class="text-xl font-bold"></h3>
+        <div class="flex gap-2 w-full md:w-auto">
+            <div class="relative flex-1 md:w-64">
+                <i class="fas fa-search absolute left-3 top-3 text-slate-400 text-xs"></i>
+                <input type="text" id="history-search" oninput="updateHistorialTable()" placeholder="Buscar mes o año..." class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+            </div>
+            <button onclick="borrarHistorialCompleto()" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg font-bold text-xs hover:bg-red-100 transition flex items-center gap-2">
+                <i class="fas fa-trash-alt"></i> Borrar historial
+            </button>
+        </div>
+    </div>
+    <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
+        <table class="w-full text-left">
+            <thead class="bg-slate-50 border-b text-xs font-bold text-slate-500 uppercase">
+                <tr>
+                    <th class="p-4">Período</th>
+                    <th class="p-4">Boletas</th>
+                    <th class="p-4 text-green-600">Total ventas</th>
+                    <th class="p-4 text-red-600">Total gastos</th>
+                    <th class="p-4 text-right">Estado</th>
+                </tr>
+            </thead>
+            <tbody id="table-historial" class="divide-y divide-slate-100"></tbody>
+        </table>
+    </div>
+</section> 
+
+    <div id="modal-empleado" class="hidden modal-overlay fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white w-full max-w-md p-8 rounded-xl shadow-2xl">
+            <h2 id="modal-emp-title" class="text-xl font-bold mb-6">Nuevo empleado</h2>
+            <form id="form-empleado" class="space-y-4">
+    <input type="hidden" id="emp-index">
+    <div class="grid grid-cols-2 gap-3">
+        <input id="emp-nombre" type="text" placeholder="Nombre" class="col-span-2 w-full p-3 border rounded-lg outline-none focus:border-blue-500" required>
+        <input id="emp-puesto" type="text" placeholder="Puesto" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500" required>
+        <input id="emp-sueldo" type="number" step="0.01" placeholder="Sueldo Base $" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500" required>
+        <input id="emp-extras" type="number" step="0.01" placeholder="Extras/Bonos $" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500">
+        <input id="emp-edad" type="number" placeholder="Edad" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500">
+    </div>
+    <div class="space-y-2">
+        <label class="text-xs font-bold text-slate-500">FECHA DE INGRESO</label>
+        <input id="emp-ingreso" type="date" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500">
+    </div>
+    <input id="emp-tel" type="text" placeholder="Número de teléfono" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500">
+    <input id="emp-direccion" type="text" placeholder="Dirección" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500">
+    <textarea id="emp-vacaciones" placeholder="Registro de vacaciones (Fechas)" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500 h-20"></textarea>
+    
+    <div class="flex gap-2 pt-4">
+        <button type="button" onclick="closeModal('modal-empleado')" class="flex-1 bg-slate-100 p-3 rounded-lg font-bold text-slate-600">Cancelar</button>
+        <button type="submit" class="flex-1 bg-blue-600 text-white p-3 rounded-lg font-bold">Guardar</button>
+    </div>
+</form>
+        </div>
+    </div>
+
+    <div id="modal-proveedor" class="hidden modal-overlay fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white w-full max-w-md p-8 rounded-xl shadow-2xl">
+            <h2 class="text-xl font-bold mb-6">Nuevo proveedor</h2>
+            <form id="form-proveedor" class="space-y-4">
+                <input id="prov-nombre" type="text" placeholder="Empresa" class="w-full p-3 border rounded-lg focus:border-blue-500 outline-none" required>
+                <input id="prov-rubro" type="text" placeholder="Rubro" class="w-full p-3 border rounded-lg focus:border-blue-500 outline-none" required>
+                <input id="prov-tel" type="text" placeholder="Teléfono" class="w-full p-3 border rounded-lg focus:border-blue-500 outline-none">
+                <div class="flex gap-2 pt-4">
+                    <button type="button" onclick="closeModal('modal-proveedor')" class="flex-1 bg-slate-100 p-3 rounded-lg font-bold text-slate-600">Cancelar</button>
+                    <button type="submit" class="flex-1 bg-blue-600 text-white p-3 rounded-lg font-bold">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-boleta" class="hidden modal-overlay fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white w-full max-w-md p-8 rounded-xl shadow-2xl border border-slate-100">
+            <h2 class="text-xl font-bold mb-6 text-slate-800 flex items-center gap-2"><i class="fas fa-file-invoice-dollar text-blue-600"></i> Registrar gasto</h2>
+            <form id="form-boleta" class="space-y-4">
+                <select id="b-tipo" class="w-full p-3 border border-slate-200 rounded-lg outline-none focus:border-blue-500" required>
+                    <option value="">Categoría...</option>
+                    <option>Luz</option><option>Agua</option><option>Alquiler</option><option>Internet</option><option>Sueldos</option><option>Mercadería</option><option>Otros</option>
+                </select>
+                <select id="b-proveedor" class="w-full p-3 border border-slate-200 rounded-lg outline-none focus:border-blue-500" required>
+                    <option value="">Seleccionar proveedor...</option>
+                    <option value="Particular">Particular</option>
+                </select>
+                <input id="b-detalle" type="text" placeholder="Detalle (opcional)" class="w-full p-3 border border-slate-200 rounded-lg outline-none focus:border-blue-500">
+                <input id="b-monto" type="number" step="0.01" placeholder="Monto $" class="w-full p-3 border border-slate-200 rounded-lg outline-none focus:border-blue-500" required>
+                <input id="b-vencimiento" type="date" class="w-full p-3 border border-slate-200 rounded-lg outline-none focus:border-blue-500" required>
+                <div class="flex gap-2 pt-4">
+                    <button type="button" onclick="closeModal('modal-boleta')" class="flex-1 bg-slate-100 p-3 rounded-lg font-bold text-slate-600 hover:bg-slate-200 transition">Cancelar</button>
+                    <button type="submit" class="flex-1 bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBx_NozaAUD7jxylWbUYCu7TzM3Ylf20DM",
+        authDomain: "mas-que-burgers-admin.firebaseapp.com",
+        projectId: "mas-que-burgers-admin",
+        storageBucket: "mas-que-burgers-admin.firebasestorage.app",
+        messagingSenderId: "305904131504",
+        appId: "1:305904131504:web:0d9ea8e6bea1efff0bca75"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    window.db = getFirestore(app);
+    window.auth = getAuth(app);
+</script>
+<script src="app.js" type="module"></script>
+</body>
+</html>
