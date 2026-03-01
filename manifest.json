@@ -1,5 +1,5 @@
 {
-  "name": "Mas que Burger´s",
+  "name": "Mas que Burgers",
   "short_name": "Administración",
   "description": "Sistema de Administración",
   "start_url": "./",
@@ -36,4 +36,5 @@
       "purpose": "maskable"
     }
   ]
+
 }
