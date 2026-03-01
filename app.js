@@ -92,12 +92,20 @@ function setupListeners() {
 }
 
 // --- UI HELPERS ---
-function showToast(message) {
+function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container');
     if (!container) return;
     const toast = document.createElement('div');
-    toast.className = 'toast-msg bg-slate-900 text-white px-6 py-3 rounded-lg shadow-2xl flex items-center gap-3 border-l-4 border-green-500';
-    toast.innerHTML = `<i class="fas fa-check-circle text-green-500"></i> <span class="text-sm font-bold">${message}</span>`;
+    
+    const styles = {
+        success: { border: 'border-green-500', icon: 'fa-check-circle text-green-500' },
+        error:   { border: 'border-red-500',   icon: 'fa-exclamation-circle text-red-400' },
+        warning: { border: 'border-yellow-400', icon: 'fa-exclamation-triangle text-yellow-400' },
+    };
+    const s = styles[type] || styles.success;
+    
+    toast.className = `toast-msg bg-slate-900 text-white px-6 py-3 rounded-lg shadow-2xl flex items-center gap-3 border-l-4 ${s.border}`;
+    toast.innerHTML = `<i class="fas ${s.icon}"></i> <span class="text-sm font-bold">${message}</span>`;
     container.appendChild(toast);
     setTimeout(() => {
         toast.style.opacity = '0';
@@ -142,6 +150,10 @@ function customConfirm({ title, text, okText = 'Confirmar', type = 'blue' }) {
     });
 }
 
+// Exponer utilidades globales para uso en otros módulos (ej: costos.js)
+window.showToast = showToast;
+window.customConfirm = customConfirm;
+
 // --- NAVEGACIÓN ---
 window.showSection = function(sectionId) {
     document.querySelectorAll('main section').forEach(s => s.classList.add('hidden'));
@@ -151,7 +163,8 @@ window.showSection = function(sectionId) {
     const titles = { 
         'dashboard': 'Dashboard', 'boletas': 'Gastos semanales', 
         'empleados': 'Gestión de personal', 'proveedores': 'Proveedores', 
-        'historial': 'Historial semanal', 'ventas': 'Ventas diarias' 
+        'historial': 'Historial semanal', 'ventas': 'Ventas diarias' ,
+        'costos': 'Gestión de costos', 'costos': 'Gestión de costos' 
     };
     document.getElementById('section-title').innerText = titles[sectionId] || "Sección";
     
