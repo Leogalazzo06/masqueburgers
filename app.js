@@ -4,6 +4,33 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
+// --- GUARD DE DOBLE SUBMIT ---
+// Previene que el mismo form se envíe múltiples veces mientras espera a Firebase
+const _submitting = new Set();
+function withSubmitGuard(formId, submitBtn, asyncFn) {
+    return async (e) => {
+        e.preventDefault();
+        if (_submitting.has(formId)) return;
+        _submitting.add(formId);
+        if (submitBtn) {
+            submitBtn.classList.add('btn-loading');
+            submitBtn.disabled = true;
+        }
+        try {
+            await asyncFn(e);
+        } catch(err) {
+            console.error(err);
+            window.showToast && window.showToast('Error al guardar. Intentá de nuevo.', 'error');
+        } finally {
+            _submitting.delete(formId);
+            if (submitBtn) {
+                submitBtn.classList.remove('btn-loading');
+                submitBtn.disabled = false;
+            }
+        }
+    };
+}
+
 // --- CONTROL DE ACCESO ---
 onAuthStateChanged(window.auth, (user) => {
     if (!user) {
@@ -212,7 +239,10 @@ window.closeModal = function(id) {
 };
 
 // --- GESTIÓN DE PERSONAL ---
-document.getElementById('form-empleado').onsubmit = async (e) => {
+document.getElementById('form-empleado').onsubmit = withSubmitGuard(
+    'form-empleado',
+    document.querySelector('#modal-empleado button[type="submit"]'),
+    async (e) => {
     e.preventDefault();
     const id = document.getElementById('emp-index').value;
     const data = { 
@@ -236,7 +266,7 @@ document.getElementById('form-empleado').onsubmit = async (e) => {
     e.target.reset();
     document.getElementById('emp-index').value = "";
     showToast("Personal actualizado");
-};
+});
 
 function updateEmpleadosTable() {
     const table = document.getElementById('table-empleados');
@@ -334,7 +364,10 @@ window.deleteEmpleado = async function(id) {
 };
 
 // --- PROVEEDORES ---
-document.getElementById('form-proveedor').onsubmit = async (e) => {
+document.getElementById('form-proveedor').onsubmit = withSubmitGuard(
+    'form-proveedor',
+    document.querySelector('#modal-proveedor button[type="submit"]'),
+    async (e) => {
     e.preventDefault();
     await addDoc(collection(window.db, "proveedores"), {
         nombre: document.getElementById('prov-nombre').value,
@@ -344,7 +377,7 @@ document.getElementById('form-proveedor').onsubmit = async (e) => {
     closeModal('modal-proveedor');
     e.target.reset();
     showToast("Proveedor guardado");
-};
+});
 
 function updateProveedoresGrid() {
     const grid = document.getElementById('grid-proveedores');
@@ -393,7 +426,10 @@ window.setFilter = function(filter) {
     updateBoletasTable();
 };
 
-document.getElementById('form-boleta').onsubmit = async (e) => {
+document.getElementById('form-boleta').onsubmit = withSubmitGuard(
+    'form-boleta',
+    document.querySelector('#modal-boleta button[type="submit"]'),
+    async (e) => {
     e.preventDefault();
     const hoy = new Date();
     await addDoc(collection(window.db, "boletas"), {
@@ -409,7 +445,7 @@ document.getElementById('form-boleta').onsubmit = async (e) => {
     closeModal('modal-boleta');
     e.target.reset();
     showToast("Gasto registrado");
-};
+});
 
 function updateBoletasTable() {
     const table = document.getElementById('table-boletas');
