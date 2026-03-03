@@ -49,7 +49,7 @@ let currentFilter = 'todos';
 // --- UTILIDADES ---
 function getFechaOperativa() {
     const ahora = new Date();
-    if (ahora.getHours() < 4) {
+    if (ahora.getHours() < 13) {
         ahora.setDate(ahora.getDate() - 1);
     }
     const y = ahora.getFullYear();
