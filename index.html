@@ -10,6 +10,96 @@
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#000000">
+    <style>
+        /* Costos: card styles & animations */
+        @keyframes popIn {
+            from { opacity:0; transform: scale(.92) translateY(8px); }
+            to   { opacity:1; transform: scale(1) translateY(0); }
+        }
+        .cost-card {
+            background:#fff;
+            border:1.5px solid #e8ecf2;
+            border-radius:14px;
+            padding:16px 18px;
+            display:flex;
+            align-items:center;
+            gap:12px;
+            transition:box-shadow .18s, transform .18s, border-color .18s;
+        }
+        .cost-card:hover {
+            box-shadow:0 6px 24px rgba(0,0,0,.09);
+            transform:translateY(-2px);
+            border-color:#d1d9e6;
+        }
+        .cost-card-product {
+            background:#fff;
+            border:1.5px solid #e8ecf2;
+            border-radius:14px;
+            padding:16px 18px;
+            display:flex;
+            flex-direction:column;
+            gap:12px;
+            transition:box-shadow .18s, transform .18s, border-color .18s;
+        }
+        .cost-card-product:hover {
+            box-shadow:0 6px 24px rgba(0,0,0,.09);
+            transform:translateY(-2px);
+            border-color:#d1d9e6;
+        }
+        .cost-empty {
+            grid-column:1/-1;
+            text-align:center;
+            padding:48px 24px;
+            color:#9ba8ba;
+        }
+        .cost-empty i { font-size:32px; display:block; margin-bottom:10px; opacity:.35; }
+        .ing-list-item {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            padding:9px 12px;
+            border-radius:9px;
+            background:#f8fafc;
+            border:1px solid #edf0f5;
+            margin-bottom:6px;
+            font-size:13px;
+            list-style:none;
+        }
+        .tab-costos-btn { transition: border-bottom-color .2s; }
+    </style>
+    <style>
+        /* ── Skeleton loader ── */
+        @keyframes shimmer {
+            0%   { background-position: -600px 0; }
+            100% { background-position: 600px 0; }
+        }
+        .skeleton {
+            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+            background-size: 600px 100%;
+            animation: shimmer 1.4s infinite linear;
+            border-radius: 8px;
+        }
+        .skeleton-card {
+            background: #fff;
+            border: 1.5px solid #e8ecf2;
+            border-radius: 14px;
+            padding: 20px;
+        }
+        /* ── Submit spinner ── */
+        .btn-loading { position: relative; pointer-events: none; opacity: .75; }
+        .btn-loading::after {
+            content: '';
+            display: inline-block;
+            width: 14px; height: 14px;
+            border: 2px solid rgba(255,255,255,.5);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
 
@@ -103,7 +193,7 @@
                             <i class="fas fa-calendar-check"></i> Finalizar semana
                         </button>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" id="kpi-cards"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" id="kpi-cards"><div class="skeleton-card"><div class="skeleton h-3 w-20 mb-3"></div><div class="skeleton h-8 w-28"></div></div><div class="skeleton-card"><div class="skeleton h-3 w-20 mb-3"></div><div class="skeleton h-8 w-28"></div></div><div class="skeleton-card"><div class="skeleton h-3 w-20 mb-3"></div><div class="skeleton h-8 w-28"></div></div><div class="skeleton-card"><div class="skeleton h-3 w-20 mb-3"></div><div class="skeleton h-8 w-28"></div></div></div>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-100">
                             <h4 class="font-bold text-slate-700 mb-6 border-b pb-2">Gastos por categoría</h4>
@@ -133,7 +223,7 @@
         <th class="p-4">Cargar Extra</th> <th class="p-4 text-right">Acciones</th>
     </tr>
 </thead>
-                            <tbody id="table-empleados" class="divide-y divide-slate-100"></tbody>
+                            <tbody id="table-empleados" class="divide-y divide-slate-100"><tr><td class="p-4"><div class="skeleton h-4 w-24 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-12 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-10 rounded"></div></td></tr><tr><td class="p-4"><div class="skeleton h-4 w-24 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-12 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-10 rounded"></div></td></tr><tr><td class="p-4"><div class="skeleton h-4 w-24 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-12 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-10 rounded"></div></td></tr></tbody>
                         </table>
                     </div>
                 </section>
@@ -145,7 +235,7 @@
                             + Nuevo proveedor
                         </button>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="grid-proveedores"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="grid-proveedores"><div class="skeleton-card"><div class="skeleton h-5 w-32 mb-2"></div><div class="skeleton h-3 w-20 mb-3"></div><div class="skeleton h-3 w-24"></div></div><div class="skeleton-card"><div class="skeleton h-5 w-32 mb-2"></div><div class="skeleton h-3 w-20 mb-3"></div><div class="skeleton h-3 w-24"></div></div><div class="skeleton-card"><div class="skeleton h-5 w-32 mb-2"></div><div class="skeleton h-3 w-20 mb-3"></div><div class="skeleton h-3 w-24"></div></div></div>
                 </section>
 
                 <section id="sec-boletas" class="hidden space-y-6">
@@ -173,7 +263,7 @@
                                     <th class="p-4 text-right">Acción</th>
                                 </tr>
                             </thead>
-                            <tbody id="table-boletas" class="divide-y divide-slate-100"></tbody>
+                            <tbody id="table-boletas" class="divide-y divide-slate-100"><tr><td class="p-4"><div class="skeleton h-4 w-12 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-12 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-10 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-8 rounded"></div></td></tr><tr><td class="p-4"><div class="skeleton h-4 w-12 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-12 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-10 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-8 rounded"></div></td></tr><tr><td class="p-4"><div class="skeleton h-4 w-12 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-20 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-12 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-10 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-8 rounded"></div></td></tr></tbody>
                         </table>
                     </div>
                 </section>
@@ -207,7 +297,7 @@
                         </tr>
                     </thead>
                     <tbody id="table-ventas" class="divide-y divide-slate-100">
-                        </tbody>
+                        <tr><td class="p-4"><div class="skeleton h-4 w-28 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-24 rounded"></div></td><td class="p-4 text-right"><div class="skeleton h-4 w-12 rounded ml-auto"></div></td></tr><tr><td class="p-4"><div class="skeleton h-4 w-28 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-24 rounded"></div></td><td class="p-4 text-right"><div class="skeleton h-4 w-12 rounded ml-auto"></div></td></tr></tbody>
                 </table>
             </div>
         </div>
@@ -216,7 +306,7 @@
             <h4 class="font-bold text-slate-600 flex items-center gap-2"><i class="fas fa-chart-line"></i> Acumulado</h4>
             <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-6 rounded-xl shadow-lg text-white">
                 <p class="text-slate-400 text-xs font-bold uppercase tracking-wider">Ventas en lo que va del mes</p>
-                <h3 id="ventas-total-mes" class="text-3xl font-black mt-2 text-white">$0</h3>
+                <h3 id="ventas-total-mes" class="text-3xl font-black mt-2 text-white"><div class="skeleton h-8 w-32 mt-1" style="background:rgba(255,255,255,.15);"></div></h3>
                 <div class="mt-4 pt-4 border-t border-slate-700 flex items-center gap-2 text-[10px] text-slate-500 italic">
                     <i class="fas fa-info-circle"></i>
                     <span>Suma automática de cierres diarios</span>
@@ -249,84 +339,151 @@
                     <th class="p-4 text-right">Estado</th>
                 </tr>
             </thead>
-            <tbody id="table-historial" class="divide-y divide-slate-100"></tbody>
+            <tbody id="table-historial" class="divide-y divide-slate-100"><tr><td class="p-4"><div class="skeleton h-4 w-28 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-12 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-14 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-10 rounded"></div></td></tr><tr><td class="p-4"><div class="skeleton h-4 w-28 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-12 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-14 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-10 rounded"></div></td></tr><tr><td class="p-4"><div class="skeleton h-4 w-28 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-12 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-14 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-10 rounded"></div></td></tr></tbody>
         </table>
     </div>
 
     
 </section> 
 <section id="sec-costos" class="hidden space-y-6">
-    <div class="bg-white p-6 rounded-xl border shadow-sm">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+
+    <!-- Header -->
+    <div>
+        <h2 style="font-size:22px;font-weight:800;color:#0f172a;margin:0 0 4px;letter-spacing:-.3px;">Gestión de costos</h2>
+        <p style="color:#64748b;font-size:14px;margin:0;">Controlá insumos, recetas intermedias y márgenes del menú.</p>
+    </div>
+
+    <!-- Flujo 3 pasos -->
+    <div style="background:#fff;border-radius:16px;border:1.5px solid #e8ecf2;padding:6px 8px;display:flex;align-items:center;gap:4px;overflow-x:auto;">
+
+        <button onclick="cambiarPestañaCostos('materias')" id="btn-tab-materias" class="tab-costos-btn"
+            style="flex:1;min-width:130px;padding:12px 10px;border:none;background:transparent;border-radius:10px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .18s;border-bottom:3px solid #2563eb;">
+            <span style="width:32px;height:32px;border-radius:9px;background:#eff6ff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i class="fas fa-boxes-stacked" style="color:#2563eb;font-size:13px;"></i>
+            </span>
+            <div style="text-align:left;">
+                <div style="font-size:10px;color:#94a3b8;font-weight:700;letter-spacing:.06em;text-transform:uppercase;">Paso 1</div>
+                <div style="font-size:13px;font-weight:700;color:#1e293b;">Insumos</div>
+            </div>
+        </button>
+
+        <span style="color:#c8d0dc;font-size:12px;flex-shrink:0;"><i class="fas fa-chevron-right"></i></span>
+
+        <button onclick="cambiarPestañaCostos('preparaciones')" id="btn-tab-preparaciones" class="tab-costos-btn"
+            style="flex:1;min-width:130px;padding:12px 10px;border:none;background:transparent;border-radius:10px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .18s;border-bottom:3px solid transparent;">
+            <span style="width:32px;height:32px;border-radius:9px;background:#f5f3ff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i class="fas fa-mortar-pestle" style="color:#7c3aed;font-size:13px;"></i>
+            </span>
+            <div style="text-align:left;">
+                <div style="font-size:10px;color:#94a3b8;font-weight:700;letter-spacing:.06em;text-transform:uppercase;">Paso 2</div>
+                <div style="font-size:13px;font-weight:700;color:#1e293b;">Preparaciones</div>
+            </div>
+        </button>
+
+        <span style="color:#c8d0dc;font-size:12px;flex-shrink:0;"><i class="fas fa-chevron-right"></i></span>
+
+        <button onclick="cambiarPestañaCostos('productos')" id="btn-tab-productos" class="tab-costos-btn"
+            style="flex:1;min-width:130px;padding:12px 10px;border:none;background:transparent;border-radius:10px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .18s;border-bottom:3px solid transparent;">
+            <span style="width:32px;height:32px;border-radius:9px;background:#ecfdf5;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i class="fas fa-receipt" style="color:#059669;font-size:13px;"></i>
+            </span>
+            <div style="text-align:left;">
+                <div style="font-size:10px;color:#94a3b8;font-weight:700;letter-spacing:.06em;text-transform:uppercase;">Paso 3</div>
+                <div style="font-size:13px;font-weight:700;color:#1e293b;">Menú final</div>
+            </div>
+        </button>
+    </div>
+
+    <!-- TAB: Materias Primas -->
+    <div id="tab-materias" class="tab-costos-content">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
             <div>
-                <h3 class="text-xl font-bold text-slate-700"><i class="fas fa-calculator text-blue-500 mr-2"></i> Gestión de costos</h3>
-                <p class="text-sm text-slate-500 mt-1">Control de insumos, recetas y márgenes.</p>
+                <h3 style="font-size:16px;font-weight:700;color:#1e293b;margin:0 0 2px;">Inventario de insumos</h3>
+                <p style="font-size:13px;color:#94a3b8;margin:0;">Los materiales base que comprás a tus proveedores.</p>
             </div>
-            
-            <div class="flex bg-slate-100 p-1 rounded-lg w-full md:w-auto overflow-x-auto">
-                <button onclick="cambiarPestañaCostos('materias')" id="btn-tab-materias" class="tab-costos-btn active flex-1 md:flex-none px-4 py-2 rounded-md text-sm font-bold bg-white shadow-sm text-blue-600 transition whitespace-nowrap">
-                    1. Materias primas
-                </button>
-                <button onclick="cambiarPestañaCostos('preparaciones')" id="btn-tab-preparaciones" class="tab-costos-btn flex-1 md:flex-none px-4 py-2 rounded-md text-sm font-bold text-slate-500 hover:text-slate-700 transition whitespace-nowrap">
-                    2. Preparaciones
-                </button>
-                <button onclick="cambiarPestañaCostos('productos')" id="btn-tab-productos" class="tab-costos-btn flex-1 md:flex-none px-4 py-2 rounded-md text-sm font-bold text-slate-500 hover:text-slate-700 transition whitespace-nowrap">
-                    3. Menú final
-                </button>
+            <button onclick="openMateriaModal()"
+                style="display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:10px;background:#2563eb;color:#fff;font-weight:700;font-size:14px;border:none;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,.3);transition:all .18s;"
+                onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='#2563eb'">
+                <i class="fas fa-plus" style="font-size:11px;"></i> Nuevo insumo
+            </button>
+        </div>
+        <div id="grid-materias" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;"><div class="skeleton-card" style="display:flex;align-items:center;gap:12px;">
+            <span style="width:44px;height:44px;border-radius:12px;background:#eff6ff;flex-shrink:0;"></span>
+            <div style="flex:1;">
+                <div class="skeleton" style="height:14px;width:60%;margin-bottom:6px;border-radius:6px;"></div>
+                <div class="skeleton" style="height:11px;width:40%;border-radius:6px;"></div>
             </div>
-        </div>
+        </div><div class="skeleton-card" style="display:flex;align-items:center;gap:12px;">
+            <span style="width:44px;height:44px;border-radius:12px;background:#eff6ff;flex-shrink:0;"></span>
+            <div style="flex:1;">
+                <div class="skeleton" style="height:14px;width:60%;margin-bottom:6px;border-radius:6px;"></div>
+                <div class="skeleton" style="height:11px;width:40%;border-radius:6px;"></div>
+            </div>
+        </div><div class="skeleton-card" style="display:flex;align-items:center;gap:12px;">
+            <span style="width:44px;height:44px;border-radius:12px;background:#eff6ff;flex-shrink:0;"></span>
+            <div style="flex:1;">
+                <div class="skeleton" style="height:14px;width:60%;margin-bottom:6px;border-radius:6px;"></div>
+                <div class="skeleton" style="height:11px;width:40%;border-radius:6px;"></div>
+            </div>
+        </div></div>
     </div>
 
-    <div id="tab-materias" class="tab-costos-content bg-white p-6 rounded-xl border shadow-sm border-t-4 border-t-blue-500">
-        <div class="flex justify-between items-center mb-4">
-            <h4 class="font-bold text-slate-700">Inventario de insumos</h4>
-            <button onclick="openMateriaModal()" class="bg-blue-600 hover:bg-blue-700 transition text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm">
-                + Nuevo insumo
+    <!-- TAB: Preparaciones -->
+    <div id="tab-preparaciones" class="tab-costos-content hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+            <div>
+                <h3 style="font-size:16px;font-weight:700;color:#1e293b;margin:0 0 2px;">Recetas internas</h3>
+                <p style="font-size:13px;color:#94a3b8;margin:0;">Mezclas o elaboraciones que después usás en el menú.</p>
+            </div>
+            <button onclick="openPreparacionModal()"
+                style="display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:10px;background:#7c3aed;color:#fff;font-weight:700;font-size:14px;border:none;cursor:pointer;box-shadow:0 2px 8px rgba(124,58,237,.3);transition:all .18s;"
+                onmouseover="this.style.background='#6d28d9'" onmouseout="this.style.background='#7c3aed'">
+                <i class="fas fa-plus" style="font-size:11px;"></i> Nueva preparación
             </button>
         </div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm">
-                <thead class="bg-slate-50 text-slate-500 text-[11px] uppercase font-bold">
-                    <tr><th class="p-3">Nombre</th><th class="p-3">Compra</th><th class="p-3 text-blue-600">Costo x Unidad</th><th class="p-3 text-right">Acciones</th></tr>
-                </thead>
-                <tbody id="table-materias" class="divide-y divide-slate-100"></tbody>
-            </table>
-        </div>
+        <div id="grid-preparaciones" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;"><div class="skeleton-card" style="display:flex;align-items:center;gap:12px;">
+            <span style="width:44px;height:44px;border-radius:12px;background:#f5f3ff;flex-shrink:0;"></span>
+            <div style="flex:1;">
+                <div class="skeleton" style="height:14px;width:60%;margin-bottom:6px;border-radius:6px;"></div>
+                <div class="skeleton" style="height:11px;width:40%;border-radius:6px;"></div>
+            </div>
+        </div><div class="skeleton-card" style="display:flex;align-items:center;gap:12px;">
+            <span style="width:44px;height:44px;border-radius:12px;background:#f5f3ff;flex-shrink:0;"></span>
+            <div style="flex:1;">
+                <div class="skeleton" style="height:14px;width:60%;margin-bottom:6px;border-radius:6px;"></div>
+                <div class="skeleton" style="height:11px;width:40%;border-radius:6px;"></div>
+            </div>
+        </div></div>
     </div>
 
-    <div id="tab-preparaciones" class="tab-costos-content hidden bg-white p-6 rounded-xl border shadow-sm border-t-4 border-t-purple-500">
-        <div class="flex justify-between items-center mb-4">
-            <h4 class="font-bold text-slate-700">Recetas internas (carne, panes, etc)</h4>
-            <button onclick="openPreparacionModal()" class="bg-purple-600 hover:bg-purple-700 transition text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm">
-                + Nueva preparación
+    <!-- TAB: Productos -->
+    <div id="tab-productos" class="tab-costos-content hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+            <div>
+                <h3 style="font-size:16px;font-weight:700;color:#1e293b;margin:0 0 2px;">Menú y márgenes</h3>
+                <p style="font-size:13px;color:#94a3b8;margin:0;">Los productos finales con su precio de venta y margen.</p>
+            </div>
+            <button onclick="openProductoModal()"
+                style="display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:10px;background:#059669;color:#fff;font-weight:700;font-size:14px;border:none;cursor:pointer;box-shadow:0 2px 8px rgba(5,150,105,.3);transition:all .18s;"
+                onmouseover="this.style.background='#047857'" onmouseout="this.style.background='#059669'">
+                <i class="fas fa-plus" style="font-size:11px;"></i> Nuevo producto
             </button>
         </div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm">
-                <thead class="bg-slate-50 text-slate-500 text-[11px] uppercase font-bold">
-                    <tr><th class="p-3">Nombre</th><th class="p-3">Rendimiento</th><th class="p-3 text-purple-600">Costo x Unidad</th><th class="p-3 text-right">Acciones</th></tr>
-                </thead>
-                <tbody id="table-preparaciones" class="divide-y divide-slate-100"></tbody>
-            </table>
-        </div>
+        <div id="grid-productos" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;"><div class="skeleton-card" style="display:flex;align-items:center;gap:12px;">
+            <span style="width:44px;height:44px;border-radius:12px;background:#ecfdf5;flex-shrink:0;"></span>
+            <div style="flex:1;">
+                <div class="skeleton" style="height:14px;width:60%;margin-bottom:6px;border-radius:6px;"></div>
+                <div class="skeleton" style="height:11px;width:40%;border-radius:6px;"></div>
+            </div>
+        </div><div class="skeleton-card" style="display:flex;align-items:center;gap:12px;">
+            <span style="width:44px;height:44px;border-radius:12px;background:#ecfdf5;flex-shrink:0;"></span>
+            <div style="flex:1;">
+                <div class="skeleton" style="height:14px;width:60%;margin-bottom:6px;border-radius:6px;"></div>
+                <div class="skeleton" style="height:11px;width:40%;border-radius:6px;"></div>
+            </div>
+        </div></div>
     </div>
 
-    <div id="tab-productos" class="tab-costos-content hidden bg-white p-6 rounded-xl border shadow-sm border-t-4 border-t-green-500">
-        <div class="flex justify-between items-center mb-4">
-            <h4 class="font-bold text-slate-700">Productos a la venta</h4>
-            <button onclick="openProductoModal()" class="bg-green-600 hover:bg-green-700 transition text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm">
-                + Nuevo producto
-            </button>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm">
-                <thead class="bg-slate-50 text-slate-500 text-[11px] uppercase font-bold">
-                    <tr><th class="p-3">Producto</th><th class="p-3 text-red-500">Costo total</th><th class="p-3 text-blue-600">Venta</th><th class="p-3 text-green-600">Margen</th><th class="p-3 text-right">Acciones</th></tr>
-                </thead>
-                <tbody id="table-productos" class="divide-y divide-slate-100"></tbody>
-            </table>
-        </div>
-    </div>
 </section>
 
     <div id="modal-empleado" class="hidden modal-overlay fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -394,100 +551,130 @@
             </form>
         </div>
     </div>
-<div id="modal-materia" class="hidden modal-overlay fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="bg-white w-full max-w-md p-6 rounded-xl shadow-2xl">
-        <h2 class="text-xl font-bold mb-4">Nueva materia prima</h2>
-        <form id="form-materia" class="space-y-3">
+<div id="modal-materia" class="hidden modal-overlay fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div style="background:#fff;border-radius:20px;box-shadow:0 24px 80px rgba(0,0,0,.2);width:100%;max-width:420px;padding:32px;animation:popIn .22s cubic-bezier(.34,1.56,.64,1);">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+            <span style="width:40px;height:40px;border-radius:10px;background:#eff6ff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i class="fas fa-boxes-stacked" style="color:#2563eb;"></i>
+            </span>
+            <div>
+                <h2 style="margin:0;font-size:17px;font-weight:700;color:#0f172a;">Nuevo insumo</h2>
+                <p style="margin:0;font-size:12px;color:#94a3b8;">Materia prima base</p>
+            </div>
+        </div>
+        <form id="form-materia" style="display:flex;flex-direction:column;gap:12px;">
             <input type="hidden" id="mat-id">
-            <input id="mat-nombre" type="text" placeholder="Nombre (ej: azúcar)" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500" required>
-            <div class="grid grid-cols-2 gap-3">
-                <select id="mat-unidad" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500" required>
-                    <option value="">Unidad de medida...</option>
+            <input id="mat-nombre" type="text" placeholder="Nombre (ej: harina 000)" style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;background:#fafbfc;box-sizing:border-box;transition:border-color .15s;" onfocus="this.style.borderColor='#2563eb'" onblur="this.style.borderColor='#e2e8f0'" required>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <select id="mat-unidad" style="padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;background:#fafbfc;width:100%;box-sizing:border-box;" required>
+                    <option value="">Unidad comprada...</option>
                     <option value="kg">Kilogramos (kg)</option>
                     <option value="litro">Litros (l)</option>
                     <option value="unidad">Unidades (un)</option>
                 </select>
-                <input id="mat-cantidad" type="number" step="0.01" placeholder="Cant. Comprada" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500" required>
+                <input id="mat-cantidad" type="number" step="0.01" placeholder="Cantidad" style="padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;background:#fafbfc;width:100%;box-sizing:border-box;" required>
             </div>
-            <input id="mat-precio" type="number" step="0.01" placeholder="Precio total pagado $" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500" required>
-            <div class="flex gap-2 pt-2">
-                <button type="button" onclick="closeModal('modal-materia')" class="flex-1 bg-slate-100 p-3 rounded-lg font-bold text-slate-600">Cancelar</button>
-                <button type="submit" class="flex-1 bg-blue-600 text-white p-3 rounded-lg font-bold">Guardar</button>
+            <div style="position:relative;">
+                <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#94a3b8;font-weight:700;">$</span>
+                <input id="mat-precio" type="number" step="0.01" placeholder="Precio total pagado" style="width:100%;padding:11px 14px 11px 28px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;background:#fafbfc;box-sizing:border-box;" required>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;">
+                <button type="button" onclick="closeModal('modal-materia')"
+                    style="padding:12px;border-radius:10px;background:#f1f5f9;color:#64748b;font-weight:700;font-size:14px;border:none;cursor:pointer;">
+                    Cancelar
+                </button>
+                <button type="submit"
+                    style="padding:12px;border-radius:10px;background:#2563eb;color:#fff;font-weight:700;font-size:14px;border:none;cursor:pointer;box-shadow:0 2px 10px rgba(37,99,235,.35);">
+                    Guardar
+                </button>
             </div>
         </form>
     </div>
 </div>
 
-<div id="modal-receta" class="hidden modal-overlay fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="bg-white w-full max-w-2xl p-6 rounded-xl shadow-2xl max-h-[90vh] overflow-y-auto">
-        <h2 id="receta-titulo" class="text-xl font-bold mb-4 text-slate-800">Constructor de Receta</h2>
-        
-        <div class="bg-slate-800 p-4 rounded-xl flex flex-col gap-2 mb-6 shadow-inner">
-            <div class="flex justify-between items-center">
-                <span class="font-bold text-slate-300 text-sm uppercase tracking-wider">Costo Real:</span>
-                <span id="costo-en-vivo" class="text-3xl font-black text-green-400">$0.00</span>
+<div id="modal-receta" class="hidden modal-overlay fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div style="background:#fff;border-radius:20px;box-shadow:0 24px 80px rgba(0,0,0,.2);width:100%;max-width:560px;padding:32px;max-height:92vh;overflow-y:auto;animation:popIn .22s cubic-bezier(.34,1.56,.64,1);">
+
+        <!-- Panel costo en vivo -->
+        <div style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);border-radius:14px;padding:20px 24px;margin-bottom:24px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div>
+                    <div style="font-size:11px;color:#94a3b8;font-weight:700;letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px;">Costo real estimado</div>
+                    <div id="costo-en-vivo" style="font-size:32px;font-weight:800;color:#fff;">$0,00</div>
+                </div>
+                <span id="receta-titulo" style="background:rgba(255,255,255,.1);border-radius:8px;padding:4px 12px;font-size:11px;font-weight:700;color:rgba(255,255,255,.6);white-space:nowrap;">Nueva receta</span>
             </div>
-            <div id="panel-sugerido" class="hidden border-t border-slate-600 pt-3 mt-1 space-y-2">
-                <div class="flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-2">
-                        <i class="fas fa-percent text-yellow-400"></i>
-                        <span class="font-bold text-slate-400 text-xs uppercase tracking-wider">Margen objetivo:</span>
-                    </div>
-                    <div class="flex items-center gap-1">
+            <div id="panel-sugerido" class="hidden" style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.1);">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <i class="fas fa-percent" style="color:#fbbf24;font-size:12px;"></i>
+                        <span style="font-size:12px;color:#94a3b8;font-weight:600;">Margen objetivo</span>
                         <input id="receta-margen" type="number" min="1" max="99" step="1" value="70"
                             oninput="actualizarCostoEnVivo()"
-                            class="w-20 p-1 text-center border border-slate-500 bg-slate-700 text-yellow-300 font-black rounded-lg outline-none focus:border-yellow-400 text-sm">
-                        <span class="text-yellow-400 font-bold">%</span>
+                            style="width:54px;padding:3px 8px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:7px;color:#fbbf24;font-weight:700;font-size:13px;text-align:center;outline:none;">
+                        <span style="color:#fbbf24;font-weight:700;">%</span>
                     </div>
-                </div>
-                <div class="flex justify-between items-center">
-                    <div class="flex items-center gap-2">
-                        <i class="fas fa-lightbulb text-yellow-400"></i>
-                        <span class="font-bold text-slate-400 text-xs uppercase tracking-wider">Precio de venta sugerido:</span>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <i class="fas fa-tag" style="color:#34d399;font-size:12px;"></i>
+                        <span style="font-size:12px;color:#94a3b8;font-weight:600;">Precio sugerido</span>
+                        <span id="precio-sugerido" style="font-size:18px;font-weight:800;color:#34d399;">$0,00</span>
                     </div>
-                    <span id="precio-sugerido" class="text-xl font-black text-yellow-400">$0.00</span>
                 </div>
             </div>
         </div>
 
-        <form id="form-receta" class="space-y-4">
+        <form id="form-receta" style="display:flex;flex-direction:column;gap:14px;">
             <input type="hidden" id="receta-id">
-            <input type="hidden" id="receta-modo"> 
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <input id="receta-nombre" type="text" placeholder="Nombre (Ej: Moscú doble)" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500 font-bold text-lg" required>
-                
-                <div id="div-rendimiento" class="flex gap-2 hidden">
-                    <input id="receta-rendimiento" type="number" step="0.01" placeholder="Rendimiento Total..." class="w-2/3 p-3 border rounded-lg outline-none focus:border-purple-500">
-                    <select id="receta-unidad" class="w-1/3 p-3 border rounded-lg outline-none focus:border-purple-500 font-bold">
-                        <option value="kg">kg</option><option value="litro">litro</option><option value="unidad">un</option>
-                    </select>
-                </div>
-                
-                <input id="receta-precio" type="number" step="0.01" placeholder="Precio de Venta al Público $" class="w-full p-3 border rounded-lg outline-none focus:border-green-500 font-bold text-lg hidden">
+            <input type="hidden" id="receta-modo">
+
+            <input id="receta-nombre" type="text" placeholder="Nombre de la receta" style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:15px;font-weight:600;outline:none;background:#fafbfc;box-sizing:border-box;" required>
+
+            <div id="div-rendimiento" class="hidden flex gap-2">
+                <input id="receta-rendimiento" type="number" step="0.01" placeholder="Rendimiento total" style="flex:1;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;background:#fafbfc;">
+                <select id="receta-unidad" style="width:100px;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;font-weight:700;outline:none;background:#fafbfc;">
+                    <option value="kg">kg</option>
+                    <option value="litro">litro</option>
+                    <option value="unidad">un</option>
+                </select>
             </div>
 
-            <div class="border-t pt-4">
-                <h4 class="font-bold text-sm text-slate-600 mb-2"><i class="fas fa-list-ul"></i> Agregar ingredientes</h4>
-                <div class="flex gap-2 mb-3 bg-slate-50 p-2 rounded-lg border">
-                    <select id="ingrediente-select" onchange="actualizarUnidadesDisponibles()" class="flex-1 p-2 border rounded outline-none text-sm font-medium"></select>
-                    
-                    <input id="ingrediente-cant" type="number" step="0.001" placeholder="Cant." class="w-20 p-2 border rounded outline-none text-sm font-bold text-center">
-                    
-                    <select id="ingrediente-unidad-uso" class="w-24 p-2 border rounded outline-none text-sm font-bold bg-white"></select>
-                    
-                    <button type="button" onclick="agregarIngredienteTemporal()" class="bg-blue-600 hover:bg-blue-700 transition text-white px-4 py-2 rounded text-sm font-bold shadow"><i class="fas fa-plus"></i></button>
+            <input id="receta-precio" type="number" step="0.01" placeholder="Precio de venta $" class="hidden" style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;background:#fafbfc;box-sizing:border-box;">
+
+            <!-- Agregar ingredientes -->
+            <div style="background:#f8fafc;border-radius:12px;border:1.5px solid #e8ecf2;padding:14px;">
+                <div style="font-size:11px;font-weight:700;color:#64748b;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;">
+                    <i class="fas fa-plus-circle" style="margin-right:4px;"></i> Agregar ingredientes
                 </div>
-                <ul id="lista-ingredientes-temp" class="space-y-2 mb-4 bg-white p-3 rounded-lg border min-h-[120px] shadow-sm"></ul>
+                <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+                    <select id="ingrediente-select" onchange="actualizarUnidadesDisponibles()"
+                        style="flex:2;min-width:140px;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;outline:none;background:#fff;"></select>
+                    <input id="ingrediente-cant" type="number" step="0.001" placeholder="Cant."
+                        style="width:80px;padding:9px 10px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:700;text-align:center;outline:none;background:#fff;">
+                    <select id="ingrediente-unidad-uso"
+                        style="width:90px;padding:9px 10px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:700;outline:none;background:#fff;"></select>
+                    <button type="button" onclick="agregarIngredienteTemporal()"
+                        style="background:#2563eb;color:#fff;border:none;border-radius:10px;padding:0 16px;font-weight:700;cursor:pointer;font-size:14px;transition:background .15s;"
+                        onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='#2563eb'">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <ul id="lista-ingredientes-temp" style="min-height:80px;list-style:none;padding:0;margin:0;"></ul>
             </div>
 
-            <div class="flex gap-2 pt-2">
-                <button type="button" onclick="closeModal('modal-receta')" class="flex-1 bg-slate-100 p-3 rounded-lg font-bold text-slate-600 hover:bg-slate-200">Cancelar</button>
-                <button type="submit" class="flex-1 bg-slate-900 hover:bg-black transition text-white p-3 rounded-lg font-bold shadow-lg">Guardar Receta</button>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px;">
+                <button type="button" onclick="closeModal('modal-receta')"
+                    style="padding:13px;border-radius:10px;background:#f1f5f9;color:#64748b;font-weight:700;font-size:14px;border:none;cursor:pointer;">
+                    Cancelar
+                </button>
+                <button type="submit"
+                    style="padding:13px;border-radius:10px;background:#0f172a;color:#fff;font-weight:700;font-size:14px;border:none;cursor:pointer;box-shadow:0 2px 10px rgba(15,23,42,.25);">
+                    Guardar receta
+                </button>
             </div>
         </form>
     </div>
 </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
