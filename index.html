@@ -268,6 +268,9 @@
                     </div>
                 </section>
 <section id="sec-ventas" class="hidden space-y-8">
+    <!-- Banner cuenta regresiva del día operativo -->
+    <div id="banner-cierre-dia" class="flex items-center gap-3 px-5 py-3 rounded-xl border text-sm font-semibold shadow-sm transition-all duration-300"></div>
+
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-6 rounded-xl border shadow-sm">
         <div>
             <h3 class="text-xl font-bold text-slate-700">Cierre de caja</h3>
@@ -699,6 +702,46 @@
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js");
 }
+</script>
+
+<script>
+(function() {
+    const HORA_CIERRE = 13;
+    const banner = document.getElementById('banner-cierre-dia');
+    if (!banner) return;
+
+    function actualizar() {
+        const ahora = new Date();
+        let cierreRef = new Date(ahora);
+        cierreRef.setHours(HORA_CIERRE, 0, 0, 0);
+        if (ahora >= cierreRef) {
+            cierreRef.setDate(cierreRef.getDate() + 1);
+        }
+        const segsRestantes = Math.max(0, Math.floor((cierreRef - ahora) / 1000));
+
+        const hh = Math.floor(segsRestantes / 3600);
+        const mm = Math.floor((segsRestantes % 3600) / 60);
+        const ss = segsRestantes % 60;
+        const tiempoStr = String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0') + ':' + String(ss).padStart(2,'0');
+
+        const esUrgente  = segsRestantes <= 600;   // menos de 10 min
+        const esCritico  = segsRestantes <= 3600;  // menos de 1 hora
+
+        if (esUrgente) {
+            banner.className = 'flex items-center gap-3 px-5 py-3 rounded-xl border text-sm font-semibold shadow-sm bg-red-50 border-red-300 text-red-700';
+            banner.innerHTML = '<i class="fas fa-exclamation-triangle text-red-500 animate-pulse"></i><span>&#9888; El d&iacute;a finaliza a las <strong>13:00h</strong> &mdash; Tiempo restante: <strong class="font-mono text-red-600">' + tiempoStr + '</strong></span>';
+        } else if (esCritico) {
+            banner.className = 'flex items-center gap-3 px-5 py-3 rounded-xl border text-sm font-semibold shadow-sm bg-yellow-50 border-yellow-300 text-yellow-800';
+            banner.innerHTML = '<i class="fas fa-clock text-yellow-500"></i><span>El d&iacute;a finaliza a las <strong>13:00h</strong> &mdash; Tiempo restante: <strong class="font-mono">' + tiempoStr + '</strong></span>';
+        } else {
+            banner.className = 'flex items-center gap-3 px-5 py-3 rounded-xl border text-sm font-semibold shadow-sm bg-blue-50 border-blue-200 text-blue-700';
+            banner.innerHTML = '<i class="fas fa-info-circle text-blue-400"></i><span>El d&iacute;a finaliza a las <strong>13:00h</strong> &mdash; Tiempo restante: <strong class="font-mono">' + tiempoStr + '</strong></span>';
+        }
+    }
+
+    actualizar();
+    setInterval(actualizar, 1000);
+})();
 </script>
 </body>
 </html>
