@@ -4,6 +4,27 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
+// --- GUARD DE DOBLE SUBMIT (casa) ---
+const _submittingCasa = new Set();
+function withSubmitGuardCasa(formId, asyncFn) {
+    return async (e) => {
+        e.preventDefault();
+        if (_submittingCasa.has(formId)) return;
+        _submittingCasa.add(formId);
+        const btn = document.querySelector(`#${formId} button[type="submit"]`);
+        if (btn) { btn.classList.add('btn-loading'); btn.disabled = true; }
+        try {
+            await asyncFn(e);
+        } catch(err) {
+            console.error(err);
+            showToast('Error al guardar. Intentá de nuevo.');
+        } finally {
+            _submittingCasa.delete(formId);
+            if (btn) { btn.classList.remove('btn-loading'); btn.disabled = false; }
+        }
+    };
+}
+
 // --- SEGURIDAD ---
 onAuthStateChanged(window.auth, (user) => { if (!user) window.location.href = "login.html"; });
 
@@ -149,7 +170,7 @@ function updateDashboard() {
 }
 
 // --- ACCIONES GASTOS ---
-document.getElementById('form-boleta-casa').onsubmit = async (e) => {
+document.getElementById('form-boleta-casa').onsubmit = withSubmitGuardCasa('form-boleta-casa', async (e) => {
     e.preventDefault();
     await addDoc(collection(window.db, "casa_boletas"), {
         tipo: document.getElementById('b-tipo').value,
@@ -162,7 +183,7 @@ document.getElementById('form-boleta-casa').onsubmit = async (e) => {
     window.closeModal('modal-boleta');
     e.target.reset();
     showToast("Gasto guardado");
-};
+});
 
 window.pagarCasa = async (id) => {
     const b = boletas.find(x => x.id === id);
@@ -180,7 +201,7 @@ window.eliminarGastoCasa = async (id) => {
 };
 
 // --- PRESUPUESTO ---
-document.getElementById('form-sueldo').onsubmit = async (e) => {
+document.getElementById('form-sueldo').onsubmit = withSubmitGuardCasa('form-sueldo', async (e) => {
     e.preventDefault();
     const montoBase = parseFloat(document.getElementById('input-sueldo-valor').value);
     await setDoc(doc(window.db, "casa_config", "presupuesto"), { 
@@ -189,7 +210,7 @@ document.getElementById('form-sueldo').onsubmit = async (e) => {
     });
     window.closeModal('modal-sueldo');
     showToast("Presupuesto base actualizado");
-};
+});
 
 // --- CIERRE DE SEMANA (ACTUALIZADO: EL SOBRANTE ES REAL) ---
 window.confirmarFinalizarMesCasa = async () => {
