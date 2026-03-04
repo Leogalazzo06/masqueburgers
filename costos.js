@@ -29,12 +29,10 @@ let ingredientesTemp = [];
 onSnapshot(collection(window.db, "materias_primas"), snapshot => {
     materiasPrimas = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     renderTodo();
-    actualizarPreciosProductos(); // ← recalcula precios al cambiar materias
 });
 onSnapshot(collection(window.db, "preparaciones"), snapshot => {
     preparaciones = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     renderTodo();
-    actualizarPreciosProductos(); // ← recalcula precios al cambiar preparaciones
 });
 onSnapshot(collection(window.db, "productos"), snapshot => {
     productos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -47,32 +45,7 @@ function renderTodo() {
     renderProductos();
 }
 
-// Cuando cambian los costos base, recalcula precioVenta de todos los productos
-// que tienen margenObjetivo guardado, manteniendo el margen constante.
-let _actualizandoPrecios = false;
-async function actualizarPreciosProductos() {
-    if (_actualizandoPrecios || productos.length === 0 || materiasPrimas.length === 0) return;
-    _actualizandoPrecios = true;
 
-    const updates = [];
-    productos.forEach(p => {
-        if (!p.margenObjetivo || p.margenObjetivo <= 0) return; // sin margen guardado, no tocar
-        const costoActual = getCostoTotalProducto(p.id);
-        if (costoActual <= 0) return;
-        const nuevoPrecio = parseFloat((costoActual / (1 - p.margenObjetivo)).toFixed(2));
-        // Solo actualizar si el precio cambió más de $0.01 para evitar loops
-        if (Math.abs(nuevoPrecio - (p.precioVenta || 0)) > 0.01) {
-            updates.push(updateDoc(doc(window.db, "productos", p.id), { precioVenta: nuevoPrecio }));
-        }
-    });
-
-    if (updates.length > 0) {
-        await Promise.all(updates);
-        window.showToast && window.showToast(`💰 ${updates.length} precio(s) actualizados automáticamente`, "success");
-    }
-
-    _actualizandoPrecios = false;
-}
 
 function convertirABase(cantidad, unidadUso, unidadBase) {
     // Mismo tipo — conversiones dentro de la misma familia
@@ -151,6 +124,30 @@ function renderMaterias() {
     }).join("");
 }
 
+// --- BUSCADOR DE INSUMOS ---
+window.filtrarInsumos = function() {
+    const q = (document.getElementById('buscar-insumo')?.value || '').toLowerCase().trim();
+    const cards = document.querySelectorAll('#grid-materias .cost-card');
+    let visibles = 0;
+    cards.forEach(card => {
+        const nombre = card.querySelector('div[style*="font-weight:700"]')?.innerText?.toLowerCase() || '';
+        const mostrar = !q || nombre.includes(q);
+        card.style.display = mostrar ? '' : 'none';
+        if (mostrar) visibles++;
+    });
+    // Mostrar mensaje si no hay resultados
+    let noResult = document.getElementById('buscar-insumo-empty');
+    if (!noResult) {
+        noResult = document.createElement('div');
+        noResult.id = 'buscar-insumo-empty';
+        noResult.style.cssText = 'grid-column:1/-1;text-align:center;padding:32px;color:#94a3b8;font-size:14px;display:none;';
+        noResult.innerHTML = '<i class="fas fa-search" style="display:block;font-size:24px;margin-bottom:8px;opacity:.4;"></i>No se encontró ningún insumo con ese nombre.';
+        document.getElementById('grid-materias')?.appendChild(noResult);
+    }
+    noResult.style.display = (q && visibles === 0) ? 'block' : 'none';
+};
+
+
 function renderPreparaciones() {
     const grid = document.getElementById("grid-preparaciones");
     if (!grid) return;
@@ -189,25 +186,16 @@ function renderProductos() {
     }
     grid.innerHTML = productos.map(p => {
         const costoTotal = getCostoTotalProducto(p.id);
-        const margenPesos = (p.precioVenta||0) - costoTotal;
-        const margenPct = p.precioVenta > 0 ? (margenPesos / p.precioVenta) * 100 : 0;
-        const tieneMargenFijo = p.margenObjetivo && p.margenObjetivo > 0;
-        const colorBar = margenPct >= 60 ? '#059669' : margenPct >= 40 ? '#d97706' : '#dc2626';
-        const colorBg  = margenPct >= 60 ? '#ecfdf5' : margenPct >= 40 ? '#fffbeb' : '#fef2f2';
+        const precioHamburguesa = costoTotal * 4.5;
+        const ganancia = precioHamburguesa - costoTotal;
         return `<div class="cost-card-product">
 
-            <!-- Fila superior: nombre + botones -->
-            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
                 <div style="display:flex;align-items:center;gap:10px;min-width:0;">
                     <span style="width:36px;height:36px;border-radius:10px;background:#ecfdf5;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                         <i class="fas fa-utensils" style="color:#059669;font-size:13px;"></i>
                     </span>
-                    <div style="min-width:0;">
-                        <div style="font-weight:700;font-size:15px;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                            ${p.nombre}
-                        </div>
-                        ${tieneMargenFijo ? `<span style="font-size:10px;background:#eff6ff;color:#2563eb;padding:1px 7px;border-radius:5px;font-weight:700;display:inline-block;margin-top:2px;">⚡ precio auto</span>` : ''}
-                    </div>
+                    <div style="font-weight:700;font-size:15px;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.nombre}</div>
                 </div>
                 <div style="display:flex;gap:4px;flex-shrink:0;">
                     <button onclick="editarReceta('${p.id}','producto')" style="background:#f1f5f9;border:none;cursor:pointer;width:28px;height:28px;border-radius:7px;color:#64748b;font-size:11px;display:flex;align-items:center;justify-content:center;" title="Editar"><i class="fas fa-pen"></i></button>
@@ -215,30 +203,25 @@ function renderProductos() {
                 </div>
             </div>
 
-            <!-- Fila de números: costo | venta | margen -->
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px;">
-                <div style="background:#f8fafc;border-radius:10px;padding:10px 12px;">
-                    <div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Costo</div>
-                    <div style="font-size:15px;font-weight:800;color:#ef4444;">$${costoTotal.toLocaleString('es-AR',{minimumFractionDigits:2})}</div>
+            <div style="background:linear-gradient(135deg,#78350f,#92400e);border-radius:12px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <i class="fas fa-hamburger" style="color:#fcd34d;font-size:16px;flex-shrink:0;"></i>
+                    <div>
+                        <div style="font-size:10px;color:#fde68a;font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Precio hamburguesa</div>
+                        <div style="font-size:10px;color:#d97706;margin-top:1px;">Costo + 350%</div>
+                    </div>
                 </div>
-                <div style="background:#f8fafc;border-radius:10px;padding:10px 12px;">
-                    <div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Venta</div>
-                    <div style="font-size:15px;font-weight:800;color:#2563eb;">$${(p.precioVenta||0).toLocaleString('es-AR',{minimumFractionDigits:2})}</div>
-                </div>
-                <div style="background:${colorBg};border-radius:10px;padding:10px 12px;">
-                    <div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Margen</div>
-                    <div style="font-size:15px;font-weight:800;color:${colorBar};">${margenPct.toFixed(0)}%</div>
-                </div>
+                <div style="font-size:20px;font-weight:900;color:#fcd34d;white-space:nowrap;">$${precioHamburguesa.toLocaleString('es-AR',{minimumFractionDigits:2})}</div>
             </div>
 
-            <!-- Barra de margen -->
-            <div style="margin-top:10px;">
-                <div style="height:5px;background:#f1f3f5;border-radius:99px;overflow:hidden;">
-                    <div style="height:100%;border-radius:99px;background:${colorBar};width:${Math.min(Math.max(margenPct,0),100)}%;transition:width .4s ease;"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div style="background:#f8fafc;border-radius:10px;padding:10px 14px;">
+                    <div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Costo</div>
+                    <div style="font-size:16px;font-weight:800;color:#ef4444;white-space:nowrap;">$${costoTotal.toLocaleString('es-AR',{minimumFractionDigits:2})}</div>
                 </div>
-                <div style="display:flex;justify-content:space-between;margin-top:4px;">
-                    <span style="font-size:11px;color:#94a3b8;">Ganancia: $${margenPesos.toLocaleString('es-AR',{minimumFractionDigits:2})}</span>
-                    ${tieneMargenFijo ? `<span style="font-size:11px;color:#94a3b8;">obj. ${(p.margenObjetivo*100).toFixed(0)}%</span>` : ''}
+                <div style="background:#f0fdf4;border-radius:10px;padding:10px 14px;">
+                    <div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Ganancia</div>
+                    <div style="font-size:16px;font-weight:800;color:#059669;white-space:nowrap;">$${ganancia.toLocaleString('es-AR',{minimumFractionDigits:2})}</div>
                 </div>
             </div>
 
@@ -275,12 +258,70 @@ document.getElementById('form-materia').onsubmit = withSubmitGuardC('form-materi
     };
 
     if (id) {
+        // Calcular impacto en hamburguesas ANTES de guardar
+        const costosPrevios = {};
+        productos.forEach(p => { costosPrevios[p.id] = getCostoTotalProducto(p.id); });
+
         await updateDoc(doc(window.db, "materias_primas", id), payload);
+        window.closeModal('modal-materia');
+
+        // Esperar que los listeners actualicen y mostrar impacto
+        setTimeout(() => {
+            mostrarImpactoEnHamburguesas(costosPrevios);
+        }, 800);
     } else {
         await addDoc(collection(window.db, "materias_primas"), payload);
+        window.closeModal('modal-materia');
     }
-    window.closeModal('modal-materia');
 });
+
+function mostrarImpactoEnHamburguesas(costosPrevios) {
+    const afectadas = [];
+    productos.forEach(p => {
+        const costoAntes = costosPrevios[p.id] || 0;
+        const costoDespues = getCostoTotalProducto(p.id);
+        if (Math.abs(costoDespues - costoAntes) < 0.01) return;
+        const precioAntes = costoAntes * 4.5;
+        const precioDespues = costoDespues * 4.5;
+        const diff = precioDespues - precioAntes;
+        afectadas.push({ nombre: p.nombre, diff, precioDespues });
+    });
+
+    if (afectadas.length === 0) return;
+
+    // Construir notificación visual
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.style.cssText = 'background:#1e293b;color:#fff;border-radius:14px;padding:16px 18px;min-width:280px;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.25);animation:slideIn .3s ease;border:1px solid #334155;';
+
+    const rows = afectadas.map(a => {
+        const subio = a.diff > 0;
+        const color = subio ? '#f87171' : '#34d399';
+        const arrow = subio ? '↑' : '↓';
+        const signo = subio ? '+' : '';
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #334155;">
+            <span style="font-size:13px;font-weight:600;color:#cbd5e1;">${a.nombre}</span>
+            <div style="text-align:right;">
+                <span style="font-size:13px;font-weight:800;color:${color};">${arrow} ${signo}$${Math.abs(a.diff).toLocaleString('es-AR',{minimumFractionDigits:2})}</span>
+                <div style="font-size:10px;color:#64748b;">Nuevo precio: $${a.precioDespues.toLocaleString('es-AR',{minimumFractionDigits:2})}</div>
+            </div>
+        </div>`;
+    }).join('');
+
+    toast.innerHTML = `
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+            <i class="fas fa-hamburger" style="color:#fcd34d;font-size:16px;"></i>
+            <span style="font-weight:700;font-size:14px;">Impacto en hamburguesas</span>
+        </div>
+        ${rows}
+        <div style="font-size:11px;color:#475569;margin-top:8px;text-align:center;">Los precios se recalcularon automáticamente</div>
+    `;
+
+    container.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity .5s'; setTimeout(() => toast.remove(), 500); }, 6000);
+}
 
 // --- EDICIÓN Y CREACIÓN DE RECETAS (Preparaciones y Productos) ---
 window.openPreparacionModal = () => initRecetaModal('preparacion', 'Preparar receta');
@@ -293,9 +334,7 @@ function initRecetaModal(modo, titulo) {
     document.getElementById('receta-modo').value = modo;
     ingredientesTemp = [];
     
-    document.getElementById('panel-sugerido').classList.toggle('hidden', modo !== 'producto');
     document.getElementById('div-rendimiento').classList.toggle('hidden', modo !== 'preparacion');
-    document.getElementById('receta-precio').classList.toggle('hidden', modo !== 'producto');
     
     cargarSelectIngredientes();
     actualizarCostoEnVivo();
@@ -317,19 +356,8 @@ window.editarReceta = (id, modo) => {
         document.getElementById('receta-rendimiento').value = item.rendimiento;
         document.getElementById('receta-unidad').value = item.unidad;
         document.getElementById('div-rendimiento').classList.remove('hidden');
-        document.getElementById('receta-precio').classList.add('hidden');
-        document.getElementById('panel-sugerido').classList.add('hidden');
     } else {
-        document.getElementById('receta-precio').value = item.precioVenta;
-        // Cargar margen guardado o calcular desde el precio actual
-        const margenInput = document.getElementById('receta-margen');
-        if (margenInput) {
-            const margenGuardado = item.margenObjetivo ? (item.margenObjetivo * 100).toFixed(0) : 70;
-            margenInput.value = margenGuardado;
-        }
         document.getElementById('div-rendimiento').classList.add('hidden');
-        document.getElementById('receta-precio').classList.remove('hidden');
-        document.getElementById('panel-sugerido').classList.remove('hidden');
     }
 
     // Cargamos los ingredientes previos reconstruyendo sus precios actuales
@@ -428,17 +456,6 @@ function renderIngredientesTemp() {
 function actualizarCostoEnVivo() {
     let total = ingredientesTemp.reduce((acc, ing) => acc + ing.costoLinea, 0);
     document.getElementById('costo-en-vivo').innerText = '$' + total.toLocaleString('es-AR', {minimumFractionDigits:2});
-    
-    const modo = document.getElementById('receta-modo').value;
-    if (modo === 'producto') {
-        // Leer el margen del input (por defecto 70% = margen del 30% sobre precio venta)
-        const margenInput = document.getElementById('receta-margen');
-        const margenPct = parseFloat(margenInput ? margenInput.value : 70) / 100 || 0.70;
-        let sugerido = total / (1 - margenPct);
-        
-        document.getElementById('precio-sugerido').innerText = '$' + sugerido.toLocaleString('es-AR', {minimumFractionDigits:2});
-        document.getElementById('receta-precio').value = sugerido.toFixed(2);
-    }
 }
 
 document.getElementById('form-receta').onsubmit = withSubmitGuardC('form-receta', async (e) => {
@@ -464,10 +481,6 @@ document.getElementById('form-receta').onsubmit = withSubmitGuardC('form-receta'
         if(id) await updateDoc(doc(window.db, "preparaciones", id), payload);
         else await addDoc(collection(window.db, "preparaciones"), payload);
     } else {
-        const margenInput = document.getElementById('receta-margen');
-        const margenPct = parseFloat(margenInput ? margenInput.value : 70) / 100 || 0.70;
-        payload.precioVenta = parseFloat(document.getElementById('receta-precio').value);
-        payload.margenObjetivo = margenPct; // ← guardamos el margen para recalcular automático
         if(id) await updateDoc(doc(window.db, "productos", id), payload);
         else await addDoc(collection(window.db, "productos"), payload);
     }
@@ -489,6 +502,9 @@ window.borrarDoc = async (coleccion, id) => {
 };
 
 window.cambiarPestañaCostos = function(pestaña) {
+    // Limpiar buscador al cambiar de tab
+    const buscar = document.getElementById('buscar-insumo');
+    if (buscar) { buscar.value = ''; window.filtrarInsumos && window.filtrarInsumos(); }
     document.querySelectorAll('.tab-costos-content').forEach(el => el.classList.add('hidden'));
     document.querySelectorAll('.tab-costos-btn').forEach(btn => {
         btn.style.borderBottomColor = 'transparent';
