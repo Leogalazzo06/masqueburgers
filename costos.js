@@ -186,7 +186,7 @@ function renderProductos() {
     }
     grid.innerHTML = productos.map(p => {
         const costoTotal = getCostoTotalProducto(p.id);
-        const precioHamburguesa = costoTotal * 3.5;
+        const precioHamburguesa = costoTotal * 3;
         const ganancia = precioHamburguesa - costoTotal;
         return `<div class="cost-card-product">
 
@@ -208,7 +208,7 @@ function renderProductos() {
                     <i class="fas fa-hamburger" style="color:#fcd34d;font-size:16px;flex-shrink:0;"></i>
                     <div>
                         <div style="font-size:10px;color:#fde68a;font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Precio hamburguesa</div>
-                        <div style="font-size:10px;color:#d97706;margin-top:1px;">Costo + 250%</div>
+                        <div style="font-size:10px;color:#d97706;margin-top:1px;">Costo + 200%</div>
                     </div>
                 </div>
                 <div style="font-size:20px;font-weight:900;color:#fcd34d;white-space:nowrap;">$${precioHamburguesa.toLocaleString('es-AR',{minimumFractionDigits:2})}</div>
@@ -281,8 +281,8 @@ function mostrarImpactoEnHamburguesas(costosPrevios) {
         const costoAntes = costosPrevios[p.id] || 0;
         const costoDespues = getCostoTotalProducto(p.id);
         if (Math.abs(costoDespues - costoAntes) < 0.01) return;
-        const precioAntes = costoAntes * 3.5;
-        const precioDespues = costoDespues * 3.5;
+        const precioAntes = costoAntes * 3;
+        const precioDespues = costoDespues * 3;
         const diff = precioDespues - precioAntes;
         afectadas.push({ nombre: p.nombre, diff, precioDespues });
     });
