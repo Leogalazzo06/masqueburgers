@@ -57,14 +57,163 @@
             display:flex;
             align-items:center;
             justify-content:space-between;
-            padding:9px 12px;
-            border-radius:9px;
-            background:#f8fafc;
-            border:1px solid #edf0f5;
-            margin-bottom:6px;
+            padding:10px 14px;
+            border-radius:10px;
+            background:#fff;
+            border:1.5px solid #e8ecf2;
+            margin-bottom:7px;
             font-size:13px;
             list-style:none;
+            transition: border-color .15s, box-shadow .15s;
+            animation: ingSlideIn .18s ease;
         }
+        .ing-list-item:hover {
+            border-color:#c7d2fe;
+            box-shadow: 0 2px 8px rgba(99,102,241,.08);
+        }
+        @keyframes ingSlideIn {
+            from { opacity:0; transform: translateY(-6px); }
+            to   { opacity:1; transform: translateY(0); }
+        }
+        /* Buscador de ingredientes en modal */
+        #ing-search-wrap {
+            position: relative;
+        }
+        #ing-search-input {
+            width: 100%;
+            padding: 11px 14px 11px 38px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+            background: #fff;
+            box-sizing: border-box;
+            transition: border-color .15s;
+        }
+        #ing-search-input:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99,102,241,.1);
+        }
+        #ing-search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 13px;
+            pointer-events: none;
+        }
+        #ing-dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0; right: 0;
+            background: #fff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,.12);
+            z-index: 200;
+            max-height: 220px;
+            overflow-y: auto;
+            display: none;
+        }
+        #ing-dropdown.open { display: block; }
+        .ing-drop-group {
+            padding: 6px 0 2px;
+        }
+        .ing-drop-group-label {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: #94a3b8;
+            padding: 4px 14px 4px;
+        }
+        .ing-drop-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 14px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: #1e293b;
+            transition: background .1s;
+        }
+        .ing-drop-item:hover, .ing-drop-item.selected {
+            background: #f0f4ff;
+        }
+        .ing-drop-badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 20px;
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+        .ing-drop-badge.materia { background:#eff6ff; color:#2563eb; }
+        .ing-drop-badge.prep    { background:#f5f3ff; color:#7c3aed; }
+        /* Fila cantidad + unidad */
+        #ing-add-row {
+            display: grid;
+            grid-template-columns: 1fr 110px 42px;
+            gap: 8px;
+            margin-top: 10px;
+            align-items: center;
+        }
+        #ingrediente-cant {
+            padding: 10px 14px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            text-align: center;
+            outline: none;
+            background: #fff;
+            width: 100%;
+            box-sizing: border-box;
+            transition: border-color .15s;
+        }
+        #ingrediente-cant:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.1); }
+        #ingrediente-unidad-uso {
+            padding: 10px 8px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            outline: none;
+            background: #fff;
+            width: 100%;
+            box-sizing: border-box;
+            cursor: pointer;
+        }
+        #btn-agregar-ing {
+            width: 42px; height: 42px;
+            background: #6366f1;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background .15s, transform .1s;
+            flex-shrink: 0;
+        }
+        #btn-agregar-ing:hover { background: #4f46e5; transform: scale(1.05); }
+        #btn-agregar-ing:active { transform: scale(.96); }
+        /* Ingrediente seleccionado preview */
+        #ing-selected-preview {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #f0f4ff;
+            border-radius: 8px;
+            margin-top: 8px;
+            font-size: 12px;
+            color: #4f46e5;
+            font-weight: 600;
+        }
+        #ing-selected-preview.visible { display: flex; }
         .tab-costos-btn { transition: border-bottom-color .2s; }
     </style>
     <style>
@@ -606,69 +755,120 @@
 </div>
 
 <div id="modal-receta" class="hidden modal-overlay fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div style="background:#fff;border-radius:20px;box-shadow:0 24px 80px rgba(0,0,0,.2);width:100%;max-width:560px;padding:32px;max-height:92vh;overflow-y:auto;animation:popIn .22s cubic-bezier(.34,1.56,.64,1);">
+    <div style="background:#fff;border-radius:22px;box-shadow:0 24px 80px rgba(0,0,0,.22);width:100%;max-width:580px;max-height:92vh;overflow:hidden;display:flex;flex-direction:column;animation:popIn .22s cubic-bezier(.34,1.56,.64,1);">
 
-        <!-- Panel costo en vivo -->
-        <div style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);border-radius:14px;padding:20px 24px;margin-bottom:24px;">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <!-- Header fijo -->
+        <div style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);border-radius:22px 22px 0 0;padding:22px 28px 20px;flex-shrink:0;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
                 <div>
-                    <div style="font-size:11px;color:#94a3b8;font-weight:700;letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px;">Costo real estimado</div>
-                    <div id="costo-en-vivo" style="font-size:32px;font-weight:800;color:#fff;">$0,00</div>
+                    <div style="font-size:10px;color:#64748b;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;">Costo estimado</div>
+                    <div id="costo-en-vivo" style="font-size:34px;font-weight:900;color:#fff;line-height:1;">$0,00</div>
                 </div>
-                <span id="receta-titulo" style="background:rgba(255,255,255,.1);border-radius:8px;padding:4px 12px;font-size:11px;font-weight:700;color:rgba(255,255,255,.6);white-space:nowrap;">Nueva receta</span>
+                <div style="text-align:right;">
+                    <span id="receta-titulo" style="display:inline-block;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:4px 12px;font-size:11px;font-weight:700;color:rgba(255,255,255,.6);">Nueva receta</span>
+                    <!-- Ganancia en vivo (solo producto) -->
+                    <div id="ganancia-en-vivo" style="display:none;margin-top:8px;padding:6px 12px;background:rgba(5,150,105,.2);border:1px solid rgba(5,150,105,.3);border-radius:8px;text-align:right;">
+                        <div style="font-size:9px;color:#6ee7b7;font-weight:700;text-transform:uppercase;letter-spacing:.06em;">Ganancia</div>
+                        <div id="ganancia-valor-vivo" style="font-size:16px;font-weight:800;color:#34d399;">$0,00</div>
+                    </div>
+                </div>
             </div>
-
         </div>
 
-        <form id="form-receta" style="display:flex;flex-direction:column;gap:14px;">
-            <input type="hidden" id="receta-id">
-            <input type="hidden" id="receta-modo">
+        <!-- Cuerpo scrolleable -->
+        <div style="overflow-y:auto;flex:1;padding:24px 28px;">
+            <form id="form-receta" style="display:flex;flex-direction:column;gap:14px;">
+                <input type="hidden" id="receta-id">
+                <input type="hidden" id="receta-modo">
 
-            <input id="receta-nombre" type="text" placeholder="Nombre de la receta" style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:15px;font-weight:600;outline:none;background:#fafbfc;box-sizing:border-box;" required>
+                <input id="receta-nombre" type="text" placeholder="Nombre del producto / receta"
+                    style="width:100%;padding:12px 16px;border:1.5px solid #e2e8f0;border-radius:11px;font-size:15px;font-weight:600;outline:none;background:#fafbfc;box-sizing:border-box;transition:border-color .15s;"
+                    onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'" required>
 
-            <div id="div-rendimiento" class="hidden flex gap-2">
-                <input id="receta-rendimiento" type="number" step="0.01" placeholder="Rendimiento total" style="flex:1;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;background:#fafbfc;">
-                <select id="receta-unidad" style="width:100px;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;font-weight:700;outline:none;background:#fafbfc;">
-                    <option value="kg">kg</option>
-                    <option value="litro">litro</option>
-                    <option value="unidad">un</option>
-                </select>
-            </div>
-
-
-
-            <!-- Agregar ingredientes -->
-            <div style="background:#f8fafc;border-radius:12px;border:1.5px solid #e8ecf2;padding:14px;">
-                <div style="font-size:11px;font-weight:700;color:#64748b;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;">
-                    <i class="fas fa-plus-circle" style="margin-right:4px;"></i> Agregar ingredientes
+                <!-- Precio de venta: solo modo producto -->
+                <div id="div-precio-venta" class="hidden">
+                    <div style="position:relative;">
+                        <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-weight:700;color:#059669;font-size:15px;">$</span>
+                        <input id="receta-precio-venta" type="number" step="0.01" min="0" placeholder="Precio de venta al público"
+                            style="width:100%;padding:12px 14px 12px 28px;border:1.5px solid #bbf7d0;border-radius:11px;font-size:15px;font-weight:700;outline:none;background:#f0fdf4;box-sizing:border-box;color:#059669;transition:border-color .15s;"
+                            onfocus="this.style.borderColor='#059669'" onblur="this.style.borderColor='#bbf7d0'"
+                            oninput="actualizarGananciaEnVivo()">
+                    </div>
                 </div>
-                <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-                    <select id="ingrediente-select" onchange="actualizarUnidadesDisponibles()"
-                        style="flex:2;min-width:140px;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;outline:none;background:#fff;"></select>
-                    <input id="ingrediente-cant" type="number" step="0.001" placeholder="Cant."
-                        style="width:80px;padding:9px 10px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:700;text-align:center;outline:none;background:#fff;">
-                    <select id="ingrediente-unidad-uso"
-                        style="width:90px;padding:9px 10px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:700;outline:none;background:#fff;"></select>
-                    <button type="button" onclick="agregarIngredienteTemporal()"
-                        style="background:#2563eb;color:#fff;border:none;border-radius:10px;padding:0 16px;font-weight:700;cursor:pointer;font-size:14px;transition:background .15s;"
-                        onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='#2563eb'">
-                        <i class="fas fa-plus"></i>
+
+                <!-- Rendimiento: solo preparaciones -->
+                <div id="div-rendimiento" class="hidden" style="display:none;gap:8px;">
+                    <div style="display:flex;gap:8px;">
+                        <input id="receta-rendimiento" type="number" step="0.01" placeholder="Rendimiento total"
+                            style="flex:1;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:11px;font-size:14px;outline:none;background:#fafbfc;box-sizing:border-box;">
+                        <select id="receta-unidad"
+                            style="width:100px;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:11px;font-size:14px;font-weight:700;outline:none;background:#fafbfc;cursor:pointer;">
+                            <option value="kg">kg</option>
+                            <option value="litro">litro</option>
+                            <option value="unidad">un</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- ── Sección ingredientes ── -->
+                <div style="background:#f8fafc;border-radius:14px;border:1.5px solid #e8ecf2;overflow:hidden;">
+
+                    <!-- Título sección -->
+                    <div style="padding:12px 16px 10px;border-bottom:1.5px solid #e8ecf2;display:flex;align-items:center;justify-content:space-between;">
+                        <span style="font-size:11px;font-weight:800;color:#475569;letter-spacing:.07em;text-transform:uppercase;">
+                            <i class="fas fa-layer-group" style="margin-right:5px;color:#6366f1;"></i>Ingredientes
+                        </span>
+                        <span id="ing-count-badge" style="background:#6366f1;color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;display:none;">0</span>
+                    </div>
+
+                    <!-- Buscador + dropdown -->
+                    <div style="padding:14px 16px 10px;">
+                        <div id="ing-search-wrap" style="position:relative;">
+                            <i class="fas fa-search" id="ing-search-icon"></i>
+                            <input id="ing-search-input" type="text" placeholder="Buscar ingrediente..." autocomplete="off"
+                                oninput="filtrarIngDropdown()" onfocus="abrirIngDropdown()" />
+                            <!-- Dropdown resultados -->
+                            <div id="ing-dropdown"></div>
+                        </div>
+
+                        <!-- Preview ingrediente seleccionado -->
+                        <div id="ing-selected-preview">
+                            <i class="fas fa-check-circle" style="font-size:14px;flex-shrink:0;"></i>
+                            <span id="ing-selected-nombre" style="flex:1;"></span>
+                            <span id="ing-selected-tipo-badge" class="ing-drop-badge"></span>
+                        </div>
+                        <!-- Input hidden para mantener compatibilidad con costos.js -->
+                        <select id="ingrediente-select" style="display:none;" onchange="actualizarUnidadesDisponibles()"></select>
+
+                        <!-- Fila cantidad + unidad + botón -->
+                        <div id="ing-add-row">
+                            <input id="ingrediente-cant" type="number" step="0.001" placeholder="Cantidad" min="0">
+                            <select id="ingrediente-unidad-uso"></select>
+                            <button type="button" id="btn-agregar-ing" onclick="agregarIngredienteTemporal()" title="Agregar">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Lista ingredientes agregados -->
+                    <ul id="lista-ingredientes-temp" style="list-style:none;padding:0 12px 12px;margin:0;min-height:60px;"></ul>
+                </div>
+
+                <!-- Botones -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-top:4px;">
+                    <button type="button" onclick="closeModal('modal-receta')"
+                        style="padding:13px;border-radius:11px;background:#f1f5f9;color:#64748b;font-weight:700;font-size:14px;border:none;cursor:pointer;transition:background .15s;"
+                        onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                        style="padding:13px;border-radius:11px;background:linear-gradient(135deg,#4f46e5,#2563eb);color:#fff;font-weight:700;font-size:14px;border:none;cursor:pointer;box-shadow:0 4px 14px rgba(79,70,229,.3);transition:opacity .15s;"
+                        onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
+                        Guardar
                     </button>
                 </div>
-                <ul id="lista-ingredientes-temp" style="min-height:80px;list-style:none;padding:0;margin:0;"></ul>
-            </div>
-
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px;">
-                <button type="button" onclick="closeModal('modal-receta')"
-                    style="padding:13px;border-radius:10px;background:#f1f5f9;color:#64748b;font-weight:700;font-size:14px;border:none;cursor:pointer;">
-                    Cancelar
-                </button>
-                <button type="submit"
-                    style="padding:13px;border-radius:10px;background:#0f172a;color:#fff;font-weight:700;font-size:14px;border:none;cursor:pointer;box-shadow:0 2px 10px rgba(15,23,42,.25);">
-                    Guardar receta
-                </button>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 </div>
 
