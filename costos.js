@@ -186,10 +186,44 @@ function renderProductos() {
     }
     grid.innerHTML = productos.map(p => {
         const costoTotal = getCostoTotalProducto(p.id);
-        const precioHamburguesa = costoTotal * 3;
-        const ganancia = precioHamburguesa - costoTotal;
-        return `<div class="cost-card-product">
+        const precioVenta = p.precioVenta || 0;
+        const ganancia = precioVenta - costoTotal;
+        const tienePrec = precioVenta > 0;
+        // Bloque precio de venta
+        const bloquePrec = tienePrec
+            ? `<div style="background:linear-gradient(135deg,#78350f,#92400e);border-radius:12px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <i class="fas fa-hamburger" style="color:#fcd34d;font-size:16px;flex-shrink:0;"></i>
+                    <div>
+                        <div style="font-size:10px;color:#fde68a;font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Precio hamburguesa</div>
+                        <div style="font-size:10px;color:#d97706;margin-top:1px;">Precio de venta</div>
+                    </div>
+                </div>
+                <div style="font-size:20px;font-weight:900;color:#fcd34d;white-space:nowrap;">$${precioVenta.toLocaleString('es-AR',{minimumFractionDigits:2})}</div>
+            </div>`
+            : `<div style="background:#f8fafc;border:1.5px dashed #cbd5e1;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="editarReceta('${p.id}','producto')">
+                <i class="fas fa-tag" style="color:#94a3b8;font-size:14px;flex-shrink:0;"></i>
+                <span style="font-size:13px;color:#94a3b8;font-weight:600;">Sin precio de venta — tocá para agregar</span>
+            </div>`;
 
+        // Bloque costo + ganancia
+        const bloqueStats = tienePrec
+            ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div style="background:#f8fafc;border-radius:10px;padding:10px 14px;">
+                    <div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Costo</div>
+                    <div style="font-size:15px;font-weight:800;color:#ef4444;white-space:nowrap;">$${costoTotal.toLocaleString('es-AR',{minimumFractionDigits:2})}</div>
+                </div>
+                <div style="background:#f0fdf4;border-radius:10px;padding:10px 14px;">
+                    <div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Ganancia</div>
+                    <div style="font-size:15px;font-weight:800;color:${ganancia >= 0 ? '#059669' : '#ef4444'};white-space:nowrap;">$${ganancia.toLocaleString('es-AR',{minimumFractionDigits:2})}</div>
+                </div>
+            </div>`
+            : `<div style="background:#f8fafc;border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Costo</div>
+                <div style="font-size:15px;font-weight:800;color:#ef4444;">$${costoTotal.toLocaleString('es-AR',{minimumFractionDigits:2})}</div>
+            </div>`;
+
+        return `<div class="cost-card-product">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
                 <div style="display:flex;align-items:center;gap:10px;min-width:0;">
                     <span style="width:36px;height:36px;border-radius:10px;background:#ecfdf5;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -202,29 +236,8 @@ function renderProductos() {
                     <button onclick="borrarDoc('productos','${p.id}')" style="background:#fff0f0;border:none;cursor:pointer;width:28px;height:28px;border-radius:7px;color:#f87171;font-size:11px;display:flex;align-items:center;justify-content:center;" title="Eliminar"><i class="fas fa-trash"></i></button>
                 </div>
             </div>
-
-            <div style="background:linear-gradient(135deg,#78350f,#92400e);border-radius:12px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
-                <div style="display:flex;align-items:center;gap:8px;">
-                    <i class="fas fa-hamburger" style="color:#fcd34d;font-size:16px;flex-shrink:0;"></i>
-                    <div>
-                        <div style="font-size:10px;color:#fde68a;font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Precio hamburguesa</div>
-                        <div style="font-size:10px;color:#d97706;margin-top:1px;">Costo + 200%</div>
-                    </div>
-                </div>
-                <div style="font-size:20px;font-weight:900;color:#fcd34d;white-space:nowrap;">$${precioHamburguesa.toLocaleString('es-AR',{minimumFractionDigits:2})}</div>
-            </div>
-
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                <div style="background:#f8fafc;border-radius:10px;padding:10px 14px;">
-                    <div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Costo</div>
-                    <div style="font-size:16px;font-weight:800;color:#ef4444;white-space:nowrap;">$${costoTotal.toLocaleString('es-AR',{minimumFractionDigits:2})}</div>
-                </div>
-                <div style="background:#f0fdf4;border-radius:10px;padding:10px 14px;">
-                    <div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Ganancia</div>
-                    <div style="font-size:16px;font-weight:800;color:#059669;white-space:nowrap;">$${ganancia.toLocaleString('es-AR',{minimumFractionDigits:2})}</div>
-                </div>
-            </div>
-
+            ${bloquePrec}
+            ${bloqueStats}
         </div>`;
     }).join("");
 }
@@ -281,10 +294,11 @@ function mostrarImpactoEnHamburguesas(costosPrevios) {
         const costoAntes = costosPrevios[p.id] || 0;
         const costoDespues = getCostoTotalProducto(p.id);
         if (Math.abs(costoDespues - costoAntes) < 0.01) return;
-        const precioAntes = costoAntes * 3;
-        const precioDespues = costoDespues * 3;
-        const diff = precioDespues - precioAntes;
-        afectadas.push({ nombre: p.nombre, diff, precioDespues });
+        const precioVenta = p.precioVenta || 0;
+        const gananciaAntes = precioVenta - costoAntes;
+        const gananciaDespues = precioVenta - costoDespues;
+        const diff = gananciaDespues - gananciaAntes; // positivo = ganas más, negativo = ganas menos
+        afectadas.push({ nombre: p.nombre, diff, gananciaDespues, costoDespues, precioVenta });
     });
 
     if (afectadas.length === 0) return;
@@ -298,14 +312,17 @@ function mostrarImpactoEnHamburguesas(costosPrevios) {
 
     const rows = afectadas.map(a => {
         const subio = a.diff > 0;
-        const color = subio ? '#f87171' : '#34d399';
+        const color = subio ? '#34d399' : '#f87171'; // verde si gana más, rojo si gana menos
         const arrow = subio ? '↑' : '↓';
         const signo = subio ? '+' : '';
+        const labelGanancia = a.precioVenta > 0
+            ? `Nueva ganancia: $${a.gananciaDespues.toLocaleString('es-AR',{minimumFractionDigits:2})}`
+            : `Nuevo costo: $${a.costoDespues.toLocaleString('es-AR',{minimumFractionDigits:2})}`;
         return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #334155;">
             <span style="font-size:13px;font-weight:600;color:#cbd5e1;">${a.nombre}</span>
             <div style="text-align:right;">
                 <span style="font-size:13px;font-weight:800;color:${color};">${arrow} ${signo}$${Math.abs(a.diff).toLocaleString('es-AR',{minimumFractionDigits:2})}</span>
-                <div style="font-size:10px;color:#64748b;">Nuevo precio: $${a.precioDespues.toLocaleString('es-AR',{minimumFractionDigits:2})}</div>
+                <div style="font-size:10px;color:#64748b;">${labelGanancia}</div>
             </div>
         </div>`;
     }).join('');
@@ -334,8 +351,17 @@ function initRecetaModal(modo, titulo) {
     document.getElementById('receta-modo').value = modo;
     ingredientesTemp = [];
     
-    document.getElementById('div-rendimiento').classList.toggle('hidden', modo !== 'preparacion');
+    const divRend = document.getElementById('div-rendimiento');
+    if (divRend) divRend.style.display = modo === 'preparacion' ? 'flex' : 'none';
     
+    // Mostrar campo precio solo para productos
+    const divPrecio = document.getElementById('div-precio-venta');
+    if (divPrecio) {
+        divPrecio.classList.toggle('hidden', modo !== 'producto');
+        document.getElementById('receta-precio-venta').value = '';
+        document.getElementById('ganancia-en-vivo').style.display = 'none';
+    }
+
     cargarSelectIngredientes();
     actualizarCostoEnVivo();
     renderIngredientesTemp();
@@ -355,9 +381,17 @@ window.editarReceta = (id, modo) => {
     if(modo === 'preparacion') {
         document.getElementById('receta-rendimiento').value = item.rendimiento;
         document.getElementById('receta-unidad').value = item.unidad;
-        document.getElementById('div-rendimiento').classList.remove('hidden');
+        document.getElementById('div-rendimiento').style.display = 'flex';
+        const divPrecio = document.getElementById('div-precio-venta');
+        if (divPrecio) divPrecio.classList.add('hidden');
     } else {
-        document.getElementById('div-rendimiento').classList.add('hidden');
+        document.getElementById('div-rendimiento').style.display = 'none';
+        // Mostrar y cargar precio de venta
+        const divPrecio = document.getElementById('div-precio-venta');
+        if (divPrecio) {
+            divPrecio.classList.remove('hidden');
+            document.getElementById('receta-precio-venta').value = item.precioVenta || '';
+        }
     }
 
     // Cargamos los ingredientes previos reconstruyendo sus precios actuales
@@ -375,6 +409,7 @@ window.editarReceta = (id, modo) => {
 };
 
 function cargarSelectIngredientes() {
+    // Mantener el select oculto actualizado (lo usa agregarIngredienteTemporal)
     const select = document.getElementById('ingrediente-select');
     let options = `<option value="">Seleccione ingrediente...</option>`;
     options += `<optgroup label="Materias Primas">`;
@@ -383,8 +418,101 @@ function cargarSelectIngredientes() {
     preparaciones.forEach(p => options += `<option value="preparacion_${p.id}_${p.unidad}">${p.nombre}</option>`);
     options += `</optgroup>`;
     select.innerHTML = options;
+
+    // Resetear UI del buscador
+    const searchInput = document.getElementById('ing-search-input');
+    if (searchInput) { searchInput.value = ''; }
+    const preview = document.getElementById('ing-selected-preview');
+    if (preview) preview.classList.remove('visible');
+    cerrarIngDropdown();
     window.actualizarUnidadesDisponibles();
 }
+
+// ── Buscador dropdown ──────────────────────────────────────────────
+window.filtrarIngDropdown = function() {
+    const q = (document.getElementById('ing-search-input')?.value || '').toLowerCase().trim();
+    const dropdown = document.getElementById('ing-dropdown');
+    if (!dropdown) return;
+
+    const materiasFilt = materiasPrimas.filter(m => !q || m.nombre.toLowerCase().includes(q));
+    const prepsFilt    = preparaciones.filter(p => !q || p.nombre.toLowerCase().includes(q));
+
+    if (!materiasFilt.length && !prepsFilt.length) {
+        dropdown.innerHTML = `<div style="padding:20px;text-align:center;color:#94a3b8;font-size:13px;">Sin resultados</div>`;
+        dropdown.classList.add('open');
+        return;
+    }
+
+    let html = '';
+    if (materiasFilt.length) {
+        html += `<div class="ing-drop-group">
+            <div class="ing-drop-group-label"><i class="fas fa-cube" style="margin-right:4px;"></i>Materias Primas</div>`;
+        materiasFilt.forEach(m => {
+            const cxu = getCostoUnitarioMateria(m.id);
+            html += `<div class="ing-drop-item" onclick="seleccionarIngDropdown('materia_${m.id}_${m.unidad}','${m.nombre.replace(/'/g,"\\'")}','materia')">
+                <span style="flex:1;">${m.nombre}</span>
+                <span style="font-size:11px;color:#94a3b8;margin-right:6px;">$${cxu.toLocaleString('es-AR',{minimumFractionDigits:2})}/${m.unidad}</span>
+                <span class="ing-drop-badge materia">Insumo</span>
+            </div>`;
+        });
+        html += `</div>`;
+    }
+    if (prepsFilt.length) {
+        html += `<div class="ing-drop-group">
+            <div class="ing-drop-group-label"><i class="fas fa-mortar-pestle" style="margin-right:4px;"></i>Preparaciones</div>`;
+        prepsFilt.forEach(p => {
+            const cxu = getCostoUnitarioPreparacion(p.id);
+            html += `<div class="ing-drop-item" onclick="seleccionarIngDropdown('preparacion_${p.id}_${p.unidad}','${p.nombre.replace(/'/g,"\\'")}','preparacion')">
+                <span style="flex:1;">${p.nombre}</span>
+                <span style="font-size:11px;color:#94a3b8;margin-right:6px;">$${cxu.toLocaleString('es-AR',{minimumFractionDigits:2})}/${p.unidad}</span>
+                <span class="ing-drop-badge prep">Receta</span>
+            </div>`;
+        });
+        html += `</div>`;
+    }
+    dropdown.innerHTML = html;
+    dropdown.classList.add('open');
+};
+
+window.abrirIngDropdown = function() {
+    window.filtrarIngDropdown();
+};
+
+function cerrarIngDropdown() {
+    const d = document.getElementById('ing-dropdown');
+    if (d) { d.classList.remove('open'); d.innerHTML = ''; }
+}
+
+window.seleccionarIngDropdown = function(val, nombre, tipo) {
+    // Actualizar el select oculto
+    const select = document.getElementById('ingrediente-select');
+    if (select) { select.value = val; }
+
+    // Mostrar preview
+    const preview = document.getElementById('ing-selected-preview');
+    const spanNombre = document.getElementById('ing-selected-nombre');
+    const spanBadge  = document.getElementById('ing-selected-tipo-badge');
+    if (preview && spanNombre && spanBadge) {
+        spanNombre.textContent = nombre;
+        spanBadge.textContent = tipo === 'materia' ? 'Insumo' : 'Receta';
+        spanBadge.className = 'ing-drop-badge ' + (tipo === 'materia' ? 'materia' : 'prep');
+        preview.classList.add('visible');
+    }
+
+    // Actualizar input de búsqueda y cerrar
+    const searchInput = document.getElementById('ing-search-input');
+    if (searchInput) { searchInput.value = nombre; }
+    cerrarIngDropdown();
+
+    // Actualizar unidades y focus a cantidad
+    window.actualizarUnidadesDisponibles();
+    setTimeout(() => document.getElementById('ingrediente-cant')?.focus(), 50);
+};
+
+// Cerrar dropdown al hacer click fuera
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('#ing-search-wrap')) cerrarIngDropdown();
+});
 
 window.actualizarUnidadesDisponibles = () => {
     const val = document.getElementById('ingrediente-select').value;
@@ -392,14 +520,12 @@ window.actualizarUnidadesDisponibles = () => {
     selectUnidad.innerHTML = "";
     if (!val) return;
 
-    // Mostramos SIEMPRE todas las opciones. El usuario elige cómo
-    // quiere usar el ingrediente. convertirABase() calcula el costo.
     selectUnidad.innerHTML = `
-        <option value="unidad">Unidades (un)</option>
+        <option value="unidad">Unidades</option>
         <option value="g">Gramos (g)</option>
-        <option value="kg">Kilogramos (kg)</option>
-        <option value="ml">Mililitros (ml)</option>
-        <option value="litro">Litros (l)</option>
+        <option value="kg">Kg</option>
+        <option value="ml">ml</option>
+        <option value="litro">Litros</option>
     `;
 };
 
@@ -408,7 +534,20 @@ window.agregarIngredienteTemporal = () => {
     const cant = parseFloat(document.getElementById('ingrediente-cant').value);
     const unidadUso = document.getElementById('ingrediente-unidad-uso').value;
     
-    if (!val || !cant || cant <= 0) return;
+    if (!val || !cant || cant <= 0) {
+        // Shake visual en el campo cantidad si falta
+        const cantInput = document.getElementById('ingrediente-cant');
+        if (cantInput) {
+            cantInput.style.borderColor = '#ef4444';
+            cantInput.style.boxShadow = '0 0 0 3px rgba(239,68,68,.15)';
+            setTimeout(() => { cantInput.style.borderColor = '#e2e8f0'; cantInput.style.boxShadow = ''; }, 1200);
+        }
+        if (!val) {
+            const si = document.getElementById('ing-search-input');
+            if (si) { si.style.borderColor = '#ef4444'; setTimeout(() => si.style.borderColor = '', 1200); }
+        }
+        return;
+    }
 
     const _parts = val.split('_');
     const tipo = _parts[0];
@@ -422,7 +561,14 @@ window.agregarIngredienteTemporal = () => {
 
     ingredientesTemp.push({ tipo, idItem, cantidad: cant, unidadUso, unidadBase, nombreRef: nombreItem, costoLinea });
     
+    // Limpiar campos
     document.getElementById('ingrediente-cant').value = '';
+    document.getElementById('ing-search-input').value = '';
+    document.getElementById('ingrediente-select').value = '';
+    document.getElementById('ingrediente-unidad-uso').innerHTML = '';
+    const preview = document.getElementById('ing-selected-preview');
+    if (preview) preview.classList.remove('visible');
+
     renderIngredientesTemp();
     actualizarCostoEnVivo(); 
 };
@@ -435,19 +581,38 @@ window.quitarIngredienteTemporal = (index) => {
 
 function renderIngredientesTemp() {
     const lista = document.getElementById('lista-ingredientes-temp');
+    const badge = document.getElementById('ing-count-badge');
+
+    // Actualizar badge contador
+    if (badge) {
+        if (ingredientesTemp.length > 0) {
+            badge.textContent = ingredientesTemp.length;
+            badge.style.display = 'inline-block';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
     if (!ingredientesTemp.length) {
-        lista.innerHTML = '<li style="text-align:center;padding:20px 0;color:#c8d0dc;font-size:13px;list-style:none;"><i class="fas fa-layer-group" style="display:block;font-size:24px;margin-bottom:8px;opacity:.4;"></i>Agregá ingredientes arriba...</li>';
+        lista.innerHTML = `<li style="text-align:center;padding:22px 0 10px;color:#c8d0dc;font-size:13px;list-style:none;">
+            <i class="fas fa-layer-group" style="display:block;font-size:22px;margin-bottom:8px;opacity:.35;"></i>
+            Buscá y agregá ingredientes arriba
+        </li>`;
         return;
     }
     lista.innerHTML = ingredientesTemp.map((ing, i) => `
         <li class="ing-list-item">
-            <div style="display:flex;align-items:center;gap:8px;">
-                <span style="background:#eff6ff;color:#2563eb;font-weight:700;padding:3px 8px;border-radius:6px;font-size:12px;">${ing.cantidad} ${ing.unidadUso}</span>
-                <span style="font-weight:600;color:#1e293b;">${ing.nombreRef}</span>
+            <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+                <span style="background:${ing.tipo === 'materia' ? '#eff6ff' : '#f5f3ff'};color:${ing.tipo === 'materia' ? '#2563eb' : '#7c3aed'};font-weight:800;padding:4px 10px;border-radius:7px;font-size:12px;white-space:nowrap;flex-shrink:0;">${ing.cantidad} ${ing.unidadUso}</span>
+                <span style="font-weight:600;color:#1e293b;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ing.nombreRef}</span>
             </div>
-            <div style="display:flex;align-items:center;gap:8px;">
-                <span style="color:#64748b;font-weight:700;font-size:13px;">$${ing.costoLinea.toLocaleString('es-AR',{minimumFractionDigits:2})}</span>
-                <button type="button" onclick="quitarIngredienteTemporal(${i})" style="background:#fee2e2;color:#dc2626;border:none;cursor:pointer;width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;"><i class="fas fa-times"></i></button>
+            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                <span style="color:#475569;font-weight:700;font-size:13px;">$${ing.costoLinea.toLocaleString('es-AR',{minimumFractionDigits:2})}</span>
+                <button type="button" onclick="quitarIngredienteTemporal(${i})"
+                    style="background:#fee2e2;color:#dc2626;border:none;cursor:pointer;width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;transition:background .1s;"
+                    onmouseover="this.style.background='#fecaca'" onmouseout="this.style.background='#fee2e2'">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
         </li>
     `).join('');
@@ -456,6 +621,8 @@ function renderIngredientesTemp() {
 function actualizarCostoEnVivo() {
     let total = ingredientesTemp.reduce((acc, ing) => acc + ing.costoLinea, 0);
     document.getElementById('costo-en-vivo').innerText = '$' + total.toLocaleString('es-AR', {minimumFractionDigits:2});
+    // Actualizar ganancia en vivo si estamos en modo producto
+    window.actualizarGananciaEnVivo && window.actualizarGananciaEnVivo();
 }
 
 document.getElementById('form-receta').onsubmit = withSubmitGuardC('form-receta', async (e) => {
@@ -481,6 +648,9 @@ document.getElementById('form-receta').onsubmit = withSubmitGuardC('form-receta'
         if(id) await updateDoc(doc(window.db, "preparaciones", id), payload);
         else await addDoc(collection(window.db, "preparaciones"), payload);
     } else {
+        // Guardar precio de venta
+        const precioRaw = document.getElementById('receta-precio-venta').value;
+        payload.precioVenta = precioRaw ? parseFloat(precioRaw) : 0;
         if(id) await updateDoc(doc(window.db, "productos", id), payload);
         else await addDoc(collection(window.db, "productos"), payload);
     }
@@ -498,6 +668,27 @@ window.borrarDoc = async (coleccion, id) => {
     if (ok) {
         await deleteDoc(doc(window.db, coleccion, id));
         window.showToast("Registro eliminado");
+    }
+};
+
+window.actualizarGananciaEnVivo = function() {
+    const precioInput = parseFloat(document.getElementById('receta-precio-venta')?.value || 0);
+    const costoStr = document.getElementById('costo-en-vivo')?.innerText || '$0';
+    // Parsear el costo del display (ej: "$1.234,50" → 1234.50)
+    const costoNum = parseFloat(costoStr.replace('$','').replace(/\./g,'').replace(',','.')) || 0;
+    const ganancia = precioInput - costoNum;
+
+    const divGanancia = document.getElementById('ganancia-en-vivo');
+    const spanGanancia = document.getElementById('ganancia-valor-vivo');
+    if (!divGanancia || !spanGanancia) return;
+
+    if (precioInput > 0) {
+        divGanancia.style.display = 'flex';
+        spanGanancia.textContent = '$' + ganancia.toLocaleString('es-AR', {minimumFractionDigits:2});
+        spanGanancia.style.color = ganancia >= 0 ? '#059669' : '#ef4444';
+        divGanancia.style.background = ganancia >= 0 ? '#f0fdf4' : '#fff0f0';
+    } else {
+        divGanancia.style.display = 'none';
     }
 };
 
