@@ -1,4 +1,4 @@
-const CACHE_NAME = 'adminmqb';
+const CACHE_NAME = 'admin';
 const urlsToCache = [
   './',
   './login.html',
