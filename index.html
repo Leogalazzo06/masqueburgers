@@ -362,9 +362,14 @@
                 <section id="sec-empleados" class="hidden space-y-4">
                     <div class="flex justify-between items-center">
                         <h3 class="text-xl font-bold"></h3>
-                        <button onclick="openModal('modal-empleado')" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium shadow">
-                            + Nuevo empleado
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <button onclick="openValorHora()" class="bg-green-600 text-white px-4 py-2 rounded-lg font-medium shadow">
+                                <i class="fas fa-clock mr-1"></i> Hora extra: <span id="label-valor-hora">$0</span>
+                            </button>
+                            <button onclick="openModal('modal-empleado')" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium shadow">
+                                + Nuevo empleado
+                            </button>
+                        </div>
                     </div>
                     <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
                         <table class="w-full text-left">
@@ -372,8 +377,8 @@
     <tr>
         <th class="p-4">Nombre</th>
         <th class="p-4">Puesto / Vacaciones</th>
-        <th class="p-4">Sueldo Base</th>
-        <th class="p-4">Cargar Extra</th> <th class="p-4 text-right">Acciones</th>
+        <th class="p-4">Sueldo + Horas Extra</th>
+        <th class="p-4">Cargar Horas Extra</th> <th class="p-4 text-right">Acciones</th>
     </tr>
 </thead>
                             <tbody id="table-empleados" class="divide-y divide-slate-100"><tr><td class="p-4"><div class="skeleton h-4 w-24 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-12 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-10 rounded"></div></td></tr><tr><td class="p-4"><div class="skeleton h-4 w-24 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-12 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-10 rounded"></div></td></tr><tr><td class="p-4"><div class="skeleton h-4 w-24 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-12 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-10 rounded"></div></td></tr></tbody>
@@ -648,6 +653,20 @@
 
 </section>
 
+    <div id="modal-hora-extra" class="hidden modal-overlay fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white w-full max-w-sm p-8 rounded-xl shadow-2xl">
+            <h2 class="text-xl font-bold mb-2">Valor de la hora extra</h2>
+            <p class="text-xs text-slate-500 mb-6">Se aplica a todos los empleados.</p>
+            <form id="form-hora-extra" class="space-y-4">
+                <input id="valor-hora-extra" type="number" step="0.01" min="0" placeholder="Monto de 1 hora $" class="w-full p-3 border rounded-lg outline-none focus:border-green-500" required>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-hora-extra')" class="flex-1 bg-slate-100 p-3 rounded-lg font-bold text-slate-600">Cancelar</button>
+                    <button type="submit" class="flex-1 bg-green-600 text-white p-3 rounded-lg font-bold">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="modal-empleado" class="hidden modal-overlay fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
         <div class="bg-white w-full max-w-md p-8 rounded-xl shadow-2xl">
             <h2 id="modal-emp-title" class="text-xl font-bold mb-6">Nuevo empleado</h2>
@@ -657,7 +676,10 @@
         <input id="emp-nombre" type="text" placeholder="Nombre" class="col-span-2 w-full p-3 border rounded-lg outline-none focus:border-blue-500" required>
         <input id="emp-puesto" type="text" placeholder="Puesto" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500" required>
         <input id="emp-sueldo" type="number" step="0.01" placeholder="Sueldo Base $" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500" required>
-        <input id="emp-extras" type="number" step="0.01" placeholder="Extras/Bonos $" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500">
+        <div>
+            <label class="text-[10px] font-bold text-slate-500 uppercase">Horas extra acumuladas</label>
+            <input id="emp-horas" type="number" step="0.5" min="0" placeholder="0" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500">
+        </div>
         <input id="emp-edad" type="number" placeholder="Edad" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500">
     </div>
     <div class="space-y-2">
