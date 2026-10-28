@@ -1,6 +1,6 @@
 import { 
     collection, addDoc, onSnapshot, query, where, 
-    doc, deleteDoc, updateDoc, getDocs, writeBatch, orderBy 
+    doc, deleteDoc, updateDoc, getDocs, writeBatch, orderBy, setDoc 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
@@ -42,6 +42,7 @@ onAuthStateChanged(window.auth, (user) => {
 let boletas = [];
 let historial = [];
 let empleados = [];
+let valorHoraExtra = 0; // monto de 1 hora extra, general para todos
 let proveedores = [];
 let ventasDiarias = [];
 let currentFilter = 'todos';
@@ -91,6 +92,13 @@ if (inputMonto) {
 });
 // --- ESCUCHAS FIRESTORE ---
 function setupListeners() {
+    onSnapshot(doc(window.db, "config", "general"), (snap) => {
+        valorHoraExtra = snap.exists() ? (snap.data().valorHoraExtra || 0) : 0;
+        const label = document.getElementById('label-valor-hora');
+        if (label) label.innerText = '$' + valorHoraExtra.toLocaleString('es-AR');
+        updateEmpleadosTable();
+    });
+
     onSnapshot(collection(window.db, "empleados"), (snapshot) => {
         empleados = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         updateEmpleadosTable();
@@ -249,7 +257,7 @@ document.getElementById('form-empleado').onsubmit = withSubmitGuard(
         nombre: document.getElementById('emp-nombre').value, 
         puesto: document.getElementById('emp-puesto').value, 
         sueldo: parseFloat(document.getElementById('emp-sueldo').value) || 0,
-        extras: parseFloat(document.getElementById('emp-extras').value) || 0,
+        horasExtras: parseFloat(document.getElementById('emp-horas').value) || 0,
         edad: document.getElementById('emp-edad').value,
         ingreso: document.getElementById('emp-ingreso').value,
         tel: document.getElementById('emp-tel').value,
@@ -267,6 +275,13 @@ document.getElementById('form-empleado').onsubmit = withSubmitGuard(
     document.getElementById('emp-index').value = "";
     showToast("Personal actualizado");
 });
+
+function montoHorasExtra(emp) {
+    return (emp.horasExtras || 0) * valorHoraExtra;
+}
+function totalEmpleado(emp) {
+    return (emp.sueldo || 0) + montoHorasExtra(emp);
+}
 
 function updateEmpleadosTable() {
     const table = document.getElementById('table-empleados');
@@ -286,18 +301,29 @@ function updateEmpleadosTable() {
             <td class="p-4">
                 <div class="flex flex-col">
                     <span class="font-bold text-blue-600">$${emp.sueldo.toLocaleString('es-AR')}</span>
-                    ${emp.extras > 0 ? `<span class="text-[10px] text-green-600 font-black">+ $${emp.extras.toLocaleString('es-AR')} acumulado</span>` : ''}
+                    ${(emp.horasExtras || 0) > 0 ? `<span class="text-[10px] text-green-600 font-black">+ $${montoHorasExtra(emp).toLocaleString('es-AR')} (${emp.horasExtras} hs × $${valorHoraExtra.toLocaleString('es-AR')})</span>` : ''}
+                    ${totalEmpleado(emp) !== emp.sueldo ? `<span class="text-xs text-slate-700 font-black border-t mt-0.5 pt-0.5">Le corresponde: $${totalEmpleado(emp).toLocaleString('es-AR')}</span>` : ''}
                 </div>
             </td>
             <td class="p-4">
-                <div class="flex items-center gap-1">
-                    <input type="number" id="q-extra-${emp.id}" placeholder="$" 
-                           onkeypress="if(event.key==='Enter') sumarExtraRapido('${emp.id}')"
-                           class="w-20 p-1.5 text-xs border rounded-lg outline-none focus:border-green-500 transition">
-                    <button onclick="sumarExtraRapido('${emp.id}')" 
-                            class="bg-green-500 text-white w-7 h-7 rounded-lg hover:bg-green-600 transition flex items-center justify-center shadow-sm">
-                        <i class="fas fa-plus text-[10px]"></i>
-                    </button>
+                <div class="flex flex-col gap-1.5">
+                    <input type="number" step="0.5" min="0" id="q-horas-${emp.id}" placeholder="Cantidad de horas"
+                           onkeypress="if(event.key==='Enter') sumarHorasExtra('${emp.id}')"
+                           class="w-full min-w-[150px] p-1.5 text-xs border rounded-lg outline-none focus:border-green-500 transition">
+                    <div class="flex items-center gap-1">
+                        <button onclick="sumarHorasExtra('${emp.id}')" title="Sumar las horas escritas"
+                                class="bg-green-500 text-white px-2 h-7 rounded-lg hover:bg-green-600 transition flex items-center justify-center gap-1 shadow-sm text-[10px] font-bold">
+                            <i class="fas fa-plus text-[9px]"></i> Sumar
+                        </button>
+                        <button onclick="restarHorasExtra('${emp.id}')" title="Restar las horas escritas (corregir error)"
+                                class="bg-amber-500 text-white px-2 h-7 rounded-lg hover:bg-amber-600 transition flex items-center justify-center gap-1 shadow-sm text-[10px] font-bold">
+                            <i class="fas fa-minus text-[9px]"></i> Restar
+                        </button>
+                        <button onclick="limpiarHorasExtra('${emp.id}')" title="Borrar todas las horas extra"
+                                class="bg-red-500 text-white px-2 h-7 rounded-lg hover:bg-red-600 transition flex items-center justify-center gap-1 shadow-sm text-[10px] font-bold">
+                            <i class="fas fa-trash text-[9px]"></i> Borrar
+                        </button>
+                    </div>
                 </div>
             </td>
             <td class="p-4 text-right space-x-1">
@@ -311,18 +337,18 @@ function updateEmpleadosTable() {
 
 window.cargarSueldoComoGasto = async function(id) {
     const emp = empleados.find(e => e.id === id);
-    const totalSueldo = emp.sueldo + (emp.extras || 0);
+    const totalSueldo = totalEmpleado(emp);
 
     if(await customConfirm({ 
         title: 'Cargar Pago', 
-        text: `¿Registrar pago de $${totalSueldo.toLocaleString('es-AR')} para ${emp.nombre}? Los extras se reiniciarán a $0.` 
+        text: `¿Registrar pago de $${totalSueldo.toLocaleString('es-AR')} para ${emp.nombre}? Las horas extra se reiniciarán a 0.` 
     })) {
         const hoy = new Date();
         // Registrar como gasto pagado
         await addDoc(collection(window.db, "boletas"), {
             tipo: 'Sueldos', 
             proveedor: 'Interno', 
-            detalle: `Pago ${emp.nombre} (Base + Extras)`,
+            detalle: `Pago ${emp.nombre} (Sueldo${emp.horasExtras > 0 ? ` + ${emp.horasExtras} hs extra` : ''})`,
             monto: totalSueldo, 
             vencimiento: getFechaOperativa(), 
             pagado: true,
@@ -331,8 +357,8 @@ window.cargarSueldoComoGasto = async function(id) {
         });
 
         // Reiniciar extras del empleado
-        await updateDoc(doc(window.db, "empleados", id), { extras: 0 });
-        showToast("Sueldo registrado y extras reiniciados");
+        await updateDoc(doc(window.db, "empleados", id), { horasExtras: 0 });
+        showToast("Sueldo registrado y horas extra reiniciadas");
     }
 };
 
@@ -347,7 +373,7 @@ window.editEmpleado = function(id) {
     document.getElementById('emp-nombre').value = emp.nombre;
     document.getElementById('emp-puesto').value = emp.puesto;
     document.getElementById('emp-sueldo').value = emp.sueldo;
-    document.getElementById('emp-extras').value = emp.extras || 0;
+    document.getElementById('emp-horas').value = emp.horasExtras || 0;
     document.getElementById('emp-edad').value = emp.edad || "";
     document.getElementById('emp-ingreso').value = emp.ingreso || "";
     document.getElementById('emp-tel').value = emp.tel || "";
@@ -397,25 +423,85 @@ window.deleteProveedor = async function(id) {
         await deleteDoc(doc(window.db, "proveedores", id));
     }
 };
-window.sumarExtraRapido = async function(id) {
-    const input = document.getElementById(`q-extra-${id}`);
-    const montoASumar = parseFloat(input.value);
-    
-    if (!montoASumar || montoASumar <= 0) return;
+window.openValorHora = function() {
+    document.getElementById('valor-hora-extra').value = valorHoraExtra || '';
+    document.getElementById('modal-hora-extra').classList.remove('hidden');
+};
+
+document.getElementById('form-hora-extra').onsubmit = withSubmitGuard(
+    'form-hora-extra',
+    document.querySelector('#modal-hora-extra button[type="submit"]'),
+    async () => {
+        const valor = parseFloat(document.getElementById('valor-hora-extra').value) || 0;
+        await setDoc(doc(window.db, "config", "general"), { valorHoraExtra: valor }, { merge: true });
+        closeModal('modal-hora-extra');
+        showToast("Valor de hora extra actualizado");
+    }
+);
+
+window.restarHorasExtra = async function(id) {
+    const input = document.getElementById(`q-horas-${id}`);
+    const horas = parseFloat(input.value);
+    if (!horas || horas <= 0) {
+        showToast("Escribí cuántas horas querés restar");
+        return;
+    }
 
     const emp = empleados.find(e => e.id === id);
-    const nuevoTotalExtras = (emp.extras || 0) + montoASumar;
+    const actuales = emp.horasExtras || 0;
+    const nuevas = Math.max(0, actuales - horas);
+
+    try {
+        await updateDoc(doc(window.db, "empleados", id), { horasExtras: nuevas });
+        input.value = '';
+        input.blur();
+        showToast(`-${Math.min(horas, actuales)} hs extra para ${emp.nombre}`);
+    } catch (error) {
+        showToast("Error al restar horas extra");
+    }
+};
+
+window.limpiarHorasExtra = async function(id) {
+    const emp = empleados.find(e => e.id === id);
+    if (!(emp.horasExtras > 0)) {
+        showToast(`${emp.nombre} no tiene horas extra cargadas`);
+        return;
+    }
+    if (await customConfirm({
+        title: 'Borrar horas extra',
+        text: `¿Borrar las ${emp.horasExtras} hs extra de ${emp.nombre}?`,
+        okText: 'Borrar',
+        type: 'red'
+    })) {
+        try {
+            await updateDoc(doc(window.db, "empleados", id), { horasExtras: 0 });
+            showToast("Horas extra borradas");
+        } catch (error) {
+            showToast("Error al borrar horas extra");
+        }
+    }
+};
+
+window.sumarHorasExtra = async function(id) {
+    const input = document.getElementById(`q-horas-${id}`);
+    const horas = parseFloat(input.value);
+    if (!horas || horas <= 0) return;
+
+    const emp = empleados.find(e => e.id === id);
+    if (!valorHoraExtra) {
+        showToast("Primero cargá el valor de la hora extra (botón verde arriba)");
+        return;
+    }
 
     try {
         await updateDoc(doc(window.db, "empleados", id), {
-            extras: nuevoTotalExtras
+            horasExtras: (emp.horasExtras || 0) + horas
         });
-        
-        input.value = ''; // Limpia el campito
-        input.blur();    // Quita el foco
-        showToast(`+$${montoASumar} extra para ${emp.nombre}`);
+        input.value = '';
+        input.blur();
+        showToast(`+${horas} hs extra (+$${(horas * valorHoraExtra).toLocaleString('es-AR')}) para ${emp.nombre}`);
     } catch (error) {
-        showToast("Error al cargar extra");
+        showToast("Error al cargar horas extra");
     }
 };
 // --- GASTOS / BOLETAS ---
