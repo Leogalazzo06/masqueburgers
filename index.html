@@ -362,27 +362,81 @@
                 <section id="sec-empleados" class="hidden space-y-4">
                     <div class="flex justify-between items-center">
                         <h3 class="text-xl font-bold"></h3>
-                        <div class="flex items-center gap-2">
+                        <div class="flex flex-wrap items-center gap-2">
                             <button onclick="openValorHora()" class="bg-green-600 text-white px-4 py-2 rounded-lg font-medium shadow">
                                 <i class="fas fa-clock mr-1"></i> Hora extra: <span id="label-valor-hora">$0</span>
+                            </button>
+                            <button onclick="abrirNuevaSucursal()" class="bg-slate-700 text-white px-4 py-2 rounded-lg font-medium shadow">
+                                <i class="fas fa-store mr-1"></i> + Nueva sucursal
                             </button>
                             <button onclick="openModal('modal-empleado')" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium shadow">
                                 + Nuevo empleado
                             </button>
                         </div>
                     </div>
-                    <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
-                        <table class="w-full text-left">
-                           <thead class="bg-slate-50 border-b text-xs uppercase text-slate-500 font-bold">
-    <tr>
-        <th class="p-4">Nombre</th>
-        <th class="p-4">Puesto / Vacaciones</th>
-        <th class="p-4">Sueldo + Horas Extra</th>
-        <th class="p-4">Cargar Horas Extra</th> <th class="p-4 text-right">Acciones</th>
-    </tr>
-</thead>
-                            <tbody id="table-empleados" class="divide-y divide-slate-100"><tr><td class="p-4"><div class="skeleton h-4 w-24 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-12 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-10 rounded"></div></td></tr><tr><td class="p-4"><div class="skeleton h-4 w-24 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-12 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-10 rounded"></div></td></tr><tr><td class="p-4"><div class="skeleton h-4 w-24 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-16 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-12 rounded"></div></td><td class="p-4"><div class="skeleton h-4 w-10 rounded"></div></td></tr></tbody>
-                        </table>
+                    <!-- Pantalla de selección de sucursal -->
+                    <div id="personal-landing" class="hidden"></div>
+
+                    <div id="personal-contenido" class="space-y-4">
+                    <div id="barra-sucursal"></div>
+                    <!-- Pestañas de Personal -->
+                    <div class="flex gap-2">
+                        <button id="tab-semana" onclick="setVistaPersonal('semana')" class="px-4 py-2 rounded-lg font-bold text-sm shadow-sm bg-blue-600 text-white transition">
+                            <i class="fas fa-calendar-week mr-1"></i> Semana
+                        </button>
+                        <button id="tab-historial" onclick="setVistaPersonal('historial')" class="px-4 py-2 rounded-lg font-bold text-sm shadow-sm bg-white text-slate-600 border transition">
+                            <i class="fas fa-history mr-1"></i> Historial de pagos
+                        </button>
+                    </div>
+
+                    <div id="vista-semana" class="space-y-4">
+                    <!-- Navegador de semana -->
+                    <div class="bg-white rounded-lg shadow-sm border p-3 flex items-center justify-between gap-2">
+                        <button onclick="cambiarSemana(-1)" class="w-10 h-10 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition" title="Semana anterior">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <div class="text-center">
+                            <p id="label-semana" class="font-bold text-slate-700 text-sm">...</p>
+                            <button onclick="irSemanaActual()" class="text-[10px] font-bold text-blue-600 hover:underline">Ir a esta semana</button>
+                        </div>
+                        <button onclick="cambiarSemana(1)" class="w-10 h-10 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition" title="Semana siguiente">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <p class="text-[11px] text-slate-400 px-1">
+                        <i class="fas fa-info-circle mr-1"></i>Tocá un día para marcar que trabajó (X) y cargá las horas extra en el casillero de abajo.
+                    </p>
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                        <input id="buscar-empleado" type="text" placeholder="Buscar empleado por nombre o puesto..." autocomplete="off"
+                               oninput="updateEmpleadosTable()"
+                               class="w-full pl-9 pr-9 py-2.5 bg-white border rounded-lg text-sm outline-none focus:border-blue-500 shadow-sm">
+                        <button onclick="limpiarBusquedaEmpleado()" id="btn-limpiar-busqueda" class="hidden absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600" title="Limpiar búsqueda">
+                            <i class="fas fa-times text-xs"></i>
+                        </button>
+                    </div>
+                    <div id="barra-pago-masivo" class="sticky bottom-3 z-20"></div>
+                    <div id="lista-empleados" class="space-y-4">
+                        <div class="skeleton-card"><div class="skeleton h-5 w-32 mb-2"></div><div class="skeleton h-16 w-full"></div></div>
+                        <div class="skeleton-card"><div class="skeleton h-5 w-32 mb-2"></div><div class="skeleton h-16 w-full"></div></div>
+                    </div>
+                    </div>
+
+                    <!-- Historial de pagos de personal -->
+                    <div id="vista-historial" class="hidden space-y-4">
+                        <div class="bg-white rounded-lg shadow-sm border p-3 grid grid-cols-1 md:grid-cols-4 gap-2">
+                            <select id="hp-empleado" onchange="renderHistorialPersonal()" class="p-2.5 border rounded-lg text-sm outline-none focus:border-blue-500"></select>
+                            <input id="hp-mes" type="month" onchange="renderHistorialPersonal()" class="p-2.5 border rounded-lg text-sm outline-none focus:border-blue-500">
+                            <button onclick="limpiarFiltrosHistorialPersonal()" class="p-2.5 rounded-lg bg-slate-100 text-slate-600 font-bold text-sm hover:bg-slate-200 transition">
+                                <i class="fas fa-eraser mr-1"></i> Limpiar filtros
+                            </button>
+                            <button onclick="exportarHistorialPersonal()" class="p-2.5 rounded-lg bg-green-600 text-white font-bold text-sm hover:bg-green-700 transition shadow-sm">
+                                <i class="fas fa-file-csv mr-1"></i> Exportar (Excel)
+                            </button>
+                        </div>
+                        <div id="hp-resumen" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
+                        <div id="hp-lista" class="space-y-3"></div>
+                    </div>
                     </div>
                 </section>
 
@@ -667,6 +721,20 @@
         </div>
     </div>
 
+    <div id="modal-sucursal" class="hidden modal-overlay fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white w-full max-w-sm p-8 rounded-xl shadow-2xl">
+            <h2 id="modal-suc-title" class="text-xl font-bold mb-6">Nueva sucursal</h2>
+            <form id="form-sucursal" class="space-y-4">
+                <input type="hidden" id="suc-id">
+                <input id="suc-nombre" type="text" placeholder="Nombre de la sucursal" maxlength="40" autocomplete="off" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500" required>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-sucursal')" class="flex-1 bg-slate-100 p-3 rounded-lg font-bold text-slate-600">Cancelar</button>
+                    <button type="submit" class="flex-1 bg-blue-600 text-white p-3 rounded-lg font-bold">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="modal-empleado" class="hidden modal-overlay fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
         <div class="bg-white w-full max-w-md p-8 rounded-xl shadow-2xl">
             <h2 id="modal-emp-title" class="text-xl font-bold mb-6">Nuevo empleado</h2>
@@ -675,9 +743,9 @@
     <div class="grid grid-cols-2 gap-3">
         <input id="emp-nombre" type="text" placeholder="Nombre" class="col-span-2 w-full p-3 border rounded-lg outline-none focus:border-blue-500" required>
         <input id="emp-puesto" type="text" placeholder="Puesto" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500" required>
-        <input id="emp-sueldo" type="number" step="0.01" placeholder="Sueldo Base $" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500" required>
+        <input id="emp-sueldo" type="number" step="0.01" placeholder="Sueldo por día $" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500" required>
         <div>
-            <label class="text-[10px] font-bold text-slate-500 uppercase">Horas extra acumuladas</label>
+            <label class="text-[10px] font-bold text-slate-500 uppercase">Horas extra pendientes (total, incluye las de la grilla)</label>
             <input id="emp-horas" type="number" step="0.5" min="0" placeholder="0" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500">
         </div>
         <input id="emp-edad" type="number" placeholder="Edad" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500">
@@ -685,6 +753,12 @@
     <div class="space-y-2">
         <label class="text-xs font-bold text-slate-500">FECHA DE INGRESO</label>
         <input id="emp-ingreso" type="date" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500">
+    </div>
+    <div>
+        <label class="text-[10px] font-bold text-slate-500 uppercase">Sucursal</label>
+        <select id="emp-sucursal" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500 bg-white">
+            <option value="">Sin sucursal</option>
+        </select>
     </div>
     <input id="emp-tel" type="text" placeholder="Número de teléfono" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500">
     <input id="emp-direccion" type="text" placeholder="Dirección" class="w-full p-3 border rounded-lg outline-none focus:border-blue-500">
