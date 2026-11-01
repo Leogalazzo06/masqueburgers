@@ -621,11 +621,11 @@ function updateEmpleadosTable() {
                     <button onclick="toggleDia('${emp.id}','${key}')"
                             title="${pagado ? 'Día ya liquidado' : trabajo ? 'Trabajó (tocá para quitar)' : 'Marcar como trabajado'}"
                             class="w-full h-10 rounded-lg border-2 font-black text-base transition ${btnCls}">
-                        ${pagado && trabajo ? '<i class="fas fa-lock text-[10px]"></i>' : 'X'}
+                        ${pagado && (trabajo || r.hs > 0) ? '<i class="fas fa-lock text-[10px]"></i>' : 'X'}
                     </button>
                     <input type="number" step="0.5" min="0" max="24" placeholder="hs"
                            value="${r.hs > 0 ? r.hs : ''}"
-                           ${trabajo && !pagado ? '' : 'disabled'}
+                           ${pagado ? 'disabled' : ''}
                            onchange="setHorasDia('${emp.id}','${key}', this.value)"
                            onkeypress="if(event.key==='Enter') this.blur()"
                            class="w-full p-1 text-center text-xs border rounded-lg outline-none focus:border-green-500 transition
@@ -717,16 +717,12 @@ window.toggleDia = async function(id, fecha) {
     const r = ((emp && emp.asistencia) || {})[fecha] || {};
     if (r.pagado) { showToast('Ese día ya fue liquidado'); return; }
     if (r.x) {
-        if (r.hs > 0 && !(await customConfirm({
-            title: 'Quitar día',
-            text: `Se va a borrar la X y las ${r.hs} hs extra de ${emp.nombre} para ese día. ¿Continuar?`,
-            type: 'red'
-        }))) return;
-        await guardarDia(id, fecha, false, 0);
+        // Quitar la X no borra las horas extra: son independientes
+        await guardarDia(id, fecha, false, r.hs || 0);
     } else {
         // Al marcar una X el empleado queda seleccionado para el pago masivo
         seleccionados.add(id);
-        await guardarDia(id, fecha, true, 0);
+        await guardarDia(id, fecha, true, r.hs || 0);
     }
 };
 
@@ -752,12 +748,13 @@ window.quitarAjusteHoras = async function(id) {
 window.setHorasDia = async function(id, fecha, valor) {
     const emp = empleados.find(e => e.id === id);
     const r = ((emp && emp.asistencia) || {})[fecha] || {};
-    if (!r.x) return;
+    if (r.pagado) { showToast('Ese día ya fue liquidado'); return; }
     const hs = Math.min(24, Math.max(0, parseFloat(valor) || 0));
     if (hs > 0 && !valorHoraExtra) {
         showToast("Cargá el valor de la hora extra (botón verde arriba) para ver el monto");
     }
-    await guardarDia(id, fecha, true, hs);
+    if (hs > 0) seleccionados.add(id);
+    await guardarDia(id, fecha, !!r.x, hs);
 };
 
 // Arma el registro de historial y los cambios al empleado para un pago
@@ -1054,6 +1051,12 @@ function renderHistorialPersonal() {
                         <p class="text-[10px] uppercase font-bold text-slate-400">Total pagado</p>
                         <p class="text-xl font-black text-slate-800">${fmtARS(p.total)}</p>
                     </div>
+                    <button onclick="imprimirRecibo('${p.id}')" class="text-[11px] bg-blue-600 text-white px-3 py-2 rounded-lg font-bold hover:bg-blue-700 transition" title="Imprimir recibo">
+                        <i class="fas fa-print mr-1"></i>Recibo
+                    </button>
+                    <button onclick="descargarReciboImagen('${p.id}')" class="text-[11px] bg-indigo-600 text-white px-3 py-2 rounded-lg font-bold hover:bg-indigo-700 transition" title="Descargar recibo como imagen">
+                        <i class="fas fa-image mr-1"></i>Imagen
+                    </button>
                     <button onclick="toggleDetallePago('${p.id}')" class="text-[11px] bg-slate-100 text-slate-700 px-3 py-2 rounded-lg font-bold hover:bg-slate-200 transition">
                         <i class="fas fa-chevron-${abierto ? 'up' : 'down'} mr-1"></i>${abierto ? 'Ocultar' : 'Ver detalle'}
                     </button>
@@ -1084,6 +1087,276 @@ function renderHistorialPersonal() {
         </div>`;
     }).join('') || '<div class="bg-white rounded-lg border p-8 text-center text-slate-400 italic text-sm">Todavía no hay pagos registrados con estos filtros.</div>';
 }
+
+// --- RECIBOS IMPRIMIBLES (varios por hoja A4) ---
+const NOMBRE_NEGOCIO = 'Más que Burgers'; // sale en el encabezado de cada recibo
+
+const RECIBO_CSS = `
+    @page { size: A4; margin: 8mm; }
+    * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { margin: 0; font-family: Arial, Helvetica, sans-serif; font-size: 8.5pt; color: #111; }
+    .recibo { border: 1px dashed #555; padding: 3mm 4mm; margin-bottom: 4mm; break-inside: avoid; page-break-inside: avoid; }
+    .cab { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1.5px solid #111; padding-bottom: 2mm; margin-bottom: 2mm; }
+    .neg { font-size: 13pt; font-weight: 800; }
+    .tit { font-size: 8pt; letter-spacing: .5px; color: #444; font-weight: 700; }
+    .der { text-align: right; font-size: 8pt; line-height: 1.35; }
+    .info { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1.3fr; gap: 2mm; margin-bottom: 2mm; }
+    .info span { display: block; font-size: 6.5pt; text-transform: uppercase; color: #666; font-weight: 700; }
+    .info b { font-size: 9pt; }
+    .cuerpo { display: flex; gap: 4mm; align-items: flex-start; }
+    .det { flex: 1.6; border-collapse: collapse; font-size: 8pt; }
+    .det th { background: #e5e7eb; text-align: left; padding: .8mm 1.5mm; font-size: 6.8pt; text-transform: uppercase; }
+    .det td { padding: .7mm 1.5mm; border-bottom: .5px solid #bbb; }
+    .c { text-align: center !important; }
+    .r { text-align: right !important; }
+    .res { flex: 1; border: 1px solid #111; padding: 2mm; }
+    .lin { display: flex; justify-content: space-between; gap: 2mm; font-size: 8pt; padding: .4mm 0; }
+    .lin.sub { border-bottom: .5px solid #bbb; margin-bottom: 1mm; padding-bottom: 1mm; }
+    .tot { display: flex; justify-content: space-between; align-items: center; background: #111; color: #fff; padding: 1.5mm 2mm; margin-top: 1.5mm; font-size: 8pt; }
+    .tot b { font-size: 13pt; }
+    .conf { margin-top: 2.5mm; font-size: 8pt; }
+    .firmas { display: flex; gap: 8mm; margin-top: 9mm; text-align: center; font-size: 7pt; color: #444; }
+    .firmas > div { flex: 1; }
+    .linea { border-top: 1px solid #111; margin-bottom: 1mm; }
+`;
+
+function reciboHTML(p) {
+    const nro = String(p.id || '').slice(0, 6).toUpperCase();
+    const hora = p.creadoEn ? new Date(p.creadoEn).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : '';
+    const periodo = p.desde ? (p.desde === p.hasta ? fmtFecha(p.desde) : `${fmtFecha(p.desde)} al ${fmtFecha(p.hasta)}`) : '—';
+    const filas = (p.detalleDias || []).map(d => `
+        <tr>
+            <td>${nombreDia(d.fecha).slice(0, 3)} ${fmtFecha(d.fecha)}</td>
+            <td class="c">${d.trabajo ? '<b>X</b>' : '—'}</td>
+            <td class="c">${d.hs > 0 ? d.hs : '—'}</td>
+            <td class="r">${fmtARS(d.montoDia)}</td>
+            <td class="r">${fmtARS(d.montoHoras)}</td>
+        </tr>`).join('');
+    const filaAjuste = p.horasAjuste ? `
+        <tr>
+            <td><i>Sin día asignado (ajuste)</i></td>
+            <td class="c">—</td>
+            <td class="c">${p.horasAjuste}</td>
+            <td class="r">${fmtARS(0)}</td>
+            <td class="r">${fmtARS(p.horasAjuste * (p.valorHoraExtra || 0))}</td>
+        </tr>` : '';
+
+    return `
+    <div class="recibo">
+        <div class="cab">
+            <div>
+                <div class="neg">${esc(NOMBRE_NEGOCIO)}</div>
+                <div class="tit">RECIBO DE PAGO DE PERSONAL</div>
+            </div>
+            <div class="der">
+                <div><b>N°</b> ${esc(nro)}</div>
+                <div><b>Fecha de pago:</b> ${fmtFecha(p.fechaPago)}${hora ? ' · ' + hora : ''}</div>
+                ${p.pagoMasivo ? '<div>Pago masivo</div>' : ''}
+            </div>
+        </div>
+        <div class="info">
+            <div><span>Empleado</span><b>${esc(p.empleadoNombre)}</b></div>
+            <div><span>Puesto</span><b>${esc(p.puesto) || '—'}</b></div>
+            <div><span>Sucursal</span><b>${esc(p.sucursalNombre) || 'Sin sucursal'}</b></div>
+            <div><span>Período trabajado</span><b>${periodo}</b></div>
+        </div>
+        <div class="cuerpo">
+            <table class="det">
+                <thead><tr><th>Día</th><th class="c">Trabajó</th><th class="c">Hs extra</th><th class="r">Sueldo del día</th><th class="r">Monto horas</th></tr></thead>
+                <tbody>${filas}${filaAjuste}</tbody>
+            </table>
+            <div class="res">
+                <div class="lin"><span>Días trabajados</span><b>${p.diasTrabajados || 0} × ${fmtARS(p.sueldoPorDia)}</b></div>
+                <div class="lin sub"><span>Subtotal días</span><b>${fmtARS(p.montoDias)}</b></div>
+                <div class="lin"><span>Horas extra</span><b>${p.horasExtra || 0} hs × ${fmtARS(p.valorHoraExtra)}</b></div>
+                <div class="lin sub"><span>Subtotal horas extra</span><b>${fmtARS(p.montoHorasExtra)}</b></div>
+                <div class="tot"><span>TOTAL PAGADO</span><b>${fmtARS(p.total)}</b></div>
+            </div>
+        </div>
+        <div class="conf">Recibí de ${esc(NOMBRE_NEGOCIO)} la suma de <b>${fmtARS(p.total)}</b> en concepto de pago por los días trabajados y horas extra del período indicado.</div>
+        <div class="firmas">
+            <div><div class="linea"></div>Firma del empleado</div>
+            <div><div class="linea"></div>Aclaración / DNI</div>
+            <div><div class="linea"></div>Firma de quien paga</div>
+        </div>
+    </div>`;
+}
+
+function imprimirRecibosDe(pagos) {
+    if (!pagos.length) { showToast('No hay pagos para imprimir'); return; }
+    const css = RECIBO_CSS;
+    const html = `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>Recibos de pago</title><style>${css}</style></head><body>${pagos.map(reciboHTML).join('')}</body></html>`;
+
+    const viejo = document.getElementById('frame-recibos');
+    if (viejo) viejo.remove();
+    const f = document.createElement('iframe');
+    f.id = 'frame-recibos';
+    f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
+    f.onload = () => {
+        try {
+            f.contentWindow.focus();
+            f.contentWindow.print();
+        } catch (err) {
+            console.error(err);
+            showToast('No se pudo abrir la impresión', 'error');
+        }
+    };
+    f.srcdoc = html;
+    document.body.appendChild(f);
+}
+
+// --- DESCARGAR RECIBOS COMO IMAGEN (PNG) ---
+let html2canvasPromise = null;
+function cargarHtml2Canvas() {
+    if (window.html2canvas) return Promise.resolve(window.html2canvas);
+    if (!html2canvasPromise) {
+        html2canvasPromise = new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+            s.onload = () => resolve(window.html2canvas);
+            s.onerror = () => { html2canvasPromise = null; reject(new Error('No se pudo cargar html2canvas')); };
+            document.head.appendChild(s);
+        });
+    }
+    return html2canvasPromise;
+}
+
+function crearFrameRecibos(bodyHtml) {
+    return new Promise(resolve => {
+        const f = document.createElement('iframe');
+        f.style.cssText = 'position:fixed;left:-10000px;top:0;width:210mm;height:3000px;border:0;';
+        f.onload = () => resolve(f);
+        f.srcdoc = `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><style>${RECIBO_CSS} body{background:#fff;} .hoja{width:210mm;background:#fff;} .hoja .recibo:last-child{margin-bottom:0;}</style></head><body>${bodyHtml}</body></html>`;
+        document.body.appendChild(f);
+    });
+}
+
+function descargarDataUrl(nombre, url) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nombre;
+    a.click();
+}
+
+const slugNombre = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase();
+
+// Genera una imagen por grupo de recibos. porImagen = 1 → un recibo por imagen; 3 → una hoja con 3 recibos
+async function generarImagenesRecibos(pagos, porImagen, nombreBase) {
+    let frame = null;
+    try {
+        const h2c = await cargarHtml2Canvas();
+        const grupos = [];
+        for (let i = 0; i < pagos.length; i += porImagen) grupos.push(pagos.slice(i, i + porImagen));
+        const pad = porImagen === 1 ? '4mm' : '8mm';
+        const html = grupos.map((g, i) => `<div class="hoja" id="hoja-${i}" style="padding:${pad}">${g.map(reciboHTML).join('')}</div>`).join('');
+        frame = await crearFrameRecibos(html);
+        const imgs = [];
+        for (let i = 0; i < grupos.length; i++) {
+            const el = frame.contentDocument.getElementById(`hoja-${i}`);
+            const canvas = await h2c(el, { scale: 2, backgroundColor: '#ffffff' });
+            imgs.push({ nombre: `${nombreBase}${grupos.length > 1 ? '-' + (i + 1) : ''}.png`, url: canvas.toDataURL('image/png') });
+        }
+        return imgs;
+    } finally {
+        if (frame) frame.remove();
+    }
+}
+
+// --- VISTA PREVIA DE LA IMAGEN (con botón de descargar) ---
+let imagenesVista = [];
+
+function teclaVistaPrevia(e) {
+    if (e.key === 'Escape') cerrarVistaPreviaRecibos();
+}
+
+window.cerrarVistaPreviaRecibos = function() {
+    const m = document.getElementById('modal-vista-recibos');
+    if (m) m.remove();
+    document.removeEventListener('keydown', teclaVistaPrevia);
+    imagenesVista = [];
+};
+
+window.descargarImagenVista = function(i) {
+    const im = imagenesVista[i];
+    if (im) descargarDataUrl(im.nombre, im.url);
+};
+
+window.descargarTodasVista = async function() {
+    const total = imagenesVista.length;
+    for (let i = 0; i < total; i++) {
+        descargarImagenVista(i);
+        if (i < total - 1) await new Promise(r => setTimeout(r, 500));
+    }
+    if (total) showToast(total > 1 ? `${total} imágenes descargadas` : 'Imagen descargada');
+};
+
+function mostrarVistaPreviaRecibos(imgs, titulo) {
+    cerrarVistaPreviaRecibos();
+    imagenesVista = imgs;
+    const m = document.createElement('div');
+    m.id = 'modal-vista-recibos';
+    m.className = 'fixed inset-0 z-[200] bg-black/60 flex items-center justify-center p-3';
+    m.onclick = (e) => { if (e.target === m) cerrarVistaPreviaRecibos(); };
+    m.innerHTML = `
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden">
+            <div class="flex items-center justify-between px-4 py-3 border-b">
+                <h3 class="font-bold text-slate-700"><i class="fas fa-image text-indigo-600 mr-2"></i>${esc(titulo)}</h3>
+                <button onclick="cerrarVistaPreviaRecibos()" class="text-slate-400 hover:text-slate-700 p-1" title="Cerrar"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="overflow-y-auto p-4 space-y-4 bg-slate-100">
+                ${imgs.map((im, i) => `
+                <div class="bg-white rounded-lg shadow border overflow-hidden">
+                    <img src="${im.url}" alt="Vista previa ${i + 1}" class="w-full block">
+                    ${imgs.length > 1 ? `
+                    <div class="flex items-center justify-between p-2 border-t text-xs">
+                        <span class="font-bold text-slate-500">Hoja ${i + 1} de ${imgs.length}</span>
+                        <button onclick="descargarImagenVista(${i})" class="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg font-bold hover:bg-slate-200 transition"><i class="fas fa-download mr-1"></i>Descargar esta</button>
+                    </div>` : ''}
+                </div>`).join('')}
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2 sm:justify-end px-4 py-3 border-t">
+                <button onclick="cerrarVistaPreviaRecibos()" class="px-4 py-2.5 rounded-lg bg-slate-100 text-slate-600 font-bold text-sm hover:bg-slate-200 transition">Cerrar</button>
+                <button onclick="descargarTodasVista()" class="px-4 py-2.5 rounded-lg bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition shadow-sm">
+                    <i class="fas fa-download mr-1"></i>${imgs.length > 1 ? `Descargar todas (${imgs.length})` : 'Descargar'}
+                </button>
+            </div>
+        </div>`;
+    document.body.appendChild(m);
+    document.addEventListener('keydown', teclaVistaPrevia);
+}
+
+async function vistaPreviaRecibos(pagos, porImagen, nombreBase, titulo) {
+    if (!pagos.length) { showToast('No hay pagos para mostrar'); return; }
+    showToast('Generando vista previa...');
+    try {
+        const imgs = await generarImagenesRecibos(pagos, porImagen, nombreBase);
+        mostrarVistaPreviaRecibos(imgs, titulo);
+    } catch (err) {
+        console.error(err);
+        showToast('No se pudo generar la imagen. Revisá tu conexión e intentá de nuevo.', 'error');
+    }
+}
+
+window.descargarReciboImagen = function(id) {
+    const p = pagosPersonal.find(x => x.id === id);
+    if (!p) return;
+    vistaPreviaRecibos([p], 1, `recibo-${slugNombre(p.empleadoNombre)}-${p.fechaPago || getFechaOperativa()}`, `Recibo de ${p.empleadoNombre}`);
+};
+
+// Una imagen por hoja (3 recibos), con los pagos que se ven según los filtros
+window.descargarImagenesHistorial = function() {
+    vistaPreviaRecibos(pagosFiltrados, 3, `recibos-${getFechaOperativa()}`, 'Vista previa de los recibos');
+};
+
+window.imprimirRecibo = function(id) {
+    const p = pagosPersonal.find(x => x.id === id);
+    if (p) imprimirRecibosDe([p]);
+};
+
+// Imprime todos los pagos que se ven con los filtros actuales (empleado / mes / sucursal)
+window.imprimirRecibosHistorial = function() {
+    imprimirRecibosDe(pagosFiltrados);
+};
 
 window.exportarHistorialPersonal = function() {
     if (!pagosFiltrados.length) { showToast('No hay pagos para exportar'); return; }
