@@ -424,11 +424,17 @@
 
                     <!-- Historial de pagos de personal -->
                     <div id="vista-historial" class="hidden space-y-4">
-                        <div class="bg-white rounded-lg shadow-sm border p-3 grid grid-cols-1 md:grid-cols-4 gap-2">
+                        <div class="bg-white rounded-lg shadow-sm border p-3 grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-2">
                             <select id="hp-empleado" onchange="renderHistorialPersonal()" class="p-2.5 border rounded-lg text-sm outline-none focus:border-blue-500"></select>
                             <input id="hp-mes" type="month" onchange="renderHistorialPersonal()" class="p-2.5 border rounded-lg text-sm outline-none focus:border-blue-500">
                             <button onclick="limpiarFiltrosHistorialPersonal()" class="p-2.5 rounded-lg bg-slate-100 text-slate-600 font-bold text-sm hover:bg-slate-200 transition">
                                 <i class="fas fa-eraser mr-1"></i> Limpiar filtros
+                            </button>
+                            <button onclick="imprimirRecibosHistorial()" class="p-2.5 rounded-lg bg-blue-600 text-white font-bold text-sm hover:bg-blue-700 transition shadow-sm">
+                                <i class="fas fa-print mr-1"></i> Imprimir recibos
+                            </button>
+                            <button onclick="descargarImagenesHistorial()" class="p-2.5 rounded-lg bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition shadow-sm">
+                                <i class="fas fa-image mr-1"></i> Descargar imágenes
                             </button>
                             <button onclick="exportarHistorialPersonal()" class="p-2.5 rounded-lg bg-green-600 text-white font-bold text-sm hover:bg-green-700 transition shadow-sm">
                                 <i class="fas fa-file-csv mr-1"></i> Exportar (Excel)
