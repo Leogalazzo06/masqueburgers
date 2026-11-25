@@ -1,4 +1,4 @@
-const CACHE_NAME = 'admin';
+const CACHE_NAME = 'admin1';
 const urlsToCache = [
   './',
   './login.html',
