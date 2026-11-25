@@ -952,6 +952,7 @@ window.setVistaPersonal = function(v) {
 window.limpiarFiltrosHistorialPersonal = function() {
     document.getElementById('hp-empleado').value = '';
     document.getElementById('hp-mes').value = '';
+    document.getElementById('hp-semana').value = '';
     renderHistorialPersonal();
 };
 
@@ -973,6 +974,22 @@ window.borrarPagoPersonal = async function(id) {
     }
 };
 
+// Lunes (YYYY-MM-DD) de la semana a la que pertenece una fecha YYYY-MM-DD
+function lunesDeSemana(key) {
+    const [y, m, d] = String(key || '').split('-').map(Number);
+    if (!y || !m || !d) return '';
+    const f = new Date(y, m - 1, d);
+    f.setDate(f.getDate() - ((f.getDay() + 6) % 7));
+    return `${f.getFullYear()}-${String(f.getMonth() + 1).padStart(2, '0')}-${String(f.getDate()).padStart(2, '0')}`;
+}
+// Semana de un pago: la del último día trabajado que cubre (si no tiene período, la de la fecha de pago)
+const semanaDePago = (p) => lunesDeSemana(p.hasta || p.fechaPago);
+function domingoDeSemana(lunesKey) {
+    const [y, m, d] = lunesKey.split('-').map(Number);
+    const f = new Date(y, m - 1, d + 6);
+    return `${f.getFullYear()}-${String(f.getMonth() + 1).padStart(2, '0')}-${String(f.getDate()).padStart(2, '0')}`;
+}
+
 function renderHistorialPersonal() {
     const lista = document.getElementById('hp-lista');
     const sel = document.getElementById('hp-empleado');
@@ -993,9 +1010,23 @@ function renderHistorialPersonal() {
     sel.value = mapa.has(prevSel) ? prevSel : '';
 
     const mes = document.getElementById('hp-mes').value;
+
+    // Selector de semanas (lunes a domingo, según el período trabajado del pago), de la más nueva a la más vieja
+    const selSem = document.getElementById('hp-semana');
+    const prevSem = selSem.value;
+    const conteoSem = new Map();
+    pagosRama
+        .filter(p => (!sel.value || p.empleadoId === sel.value) && (!mes || (p.fechaPago || '').startsWith(mes)))
+        .forEach(p => { const l = semanaDePago(p); if (l) conteoSem.set(l, (conteoSem.get(l) || 0) + 1); });
+    const semanas = [...conteoSem.keys()].sort().reverse();
+    selSem.innerHTML = '<option value="">Todas las semanas</option>' +
+        semanas.map((l, i) => `<option value="${l}">${i === 0 ? 'Última: ' : ''}${fmtFecha(l)} al ${fmtFecha(domingoDeSemana(l))} (${conteoSem.get(l)})</option>`).join('');
+    selSem.value = conteoSem.has(prevSem) ? prevSem : '';
+
     pagosFiltrados = pagosRama.filter(p =>
         (!sel.value || p.empleadoId === sel.value) &&
-        (!mes || (p.fechaPago || '').startsWith(mes))
+        (!mes || (p.fechaPago || '').startsWith(mes)) &&
+        (!selSem.value || semanaDePago(p) === selSem.value)
     );
 
     const sum = (k) => pagosFiltrados.reduce((s, p) => s + (p[k] || 0), 0);
@@ -1087,6 +1118,9 @@ function renderHistorialPersonal() {
         </div>`;
     }).join('') || '<div class="bg-white rounded-lg border p-8 text-center text-slate-400 italic text-sm">Todavía no hay pagos registrados con estos filtros.</div>';
 }
+
+// app.js es un módulo: los onchange del HTML necesitan que la función esté en window
+window.renderHistorialPersonal = renderHistorialPersonal;
 
 // --- RECIBOS IMPRIMIBLES (varios por hoja A4) ---
 const NOMBRE_NEGOCIO = 'Más que Burgers'; // sale en el encabezado de cada recibo
@@ -1354,7 +1388,13 @@ window.imprimirRecibo = function(id) {
 };
 
 // Imprime todos los pagos que se ven con los filtros actuales (empleado / mes / sucursal)
-window.imprimirRecibosHistorial = function() {
+window.imprimirRecibosHistorial = async function() {
+    const sinFiltroFecha = !document.getElementById('hp-semana').value && !document.getElementById('hp-mes').value;
+    if (sinFiltroFecha && pagosFiltrados.length > 3 && !(await customConfirm({
+        title: 'Imprimir todo el historial',
+        text: `No elegiste semana ni mes: se van a imprimir ${pagosFiltrados.length} recibos, incluidos los viejos. Para imprimir solo una semana, elegila en el filtro de semanas.`,
+        okText: 'Imprimir todos'
+    }))) return;
     imprimirRecibosDe(pagosFiltrados);
 };
 
